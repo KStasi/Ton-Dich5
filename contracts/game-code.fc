@@ -20,9 +20,10 @@
         .end_cell());
 }
 
-cell create_user(slice owner_address, cell users, int paid_until, int bans_counter, cell units) impure {
+cell create_user(slice owner_address, cell users, int paid_until, int in_game, int bans_counter, cell units) impure {
     cell user = begin_cell()
         .store_uint(paid_until, 32)
+        .store_uint(in_game, 1)
         .store_uint(bans_counter, 32)
         .store_dict(units)
         .end_cell();
@@ -30,14 +31,14 @@ cell create_user(slice owner_address, cell users, int paid_until, int bans_count
     return users;
 }
 
-(int, int, cell) get_user(slice owner_address, cell players) method_id {
-    ;; int paid_until, int bans_counter, cell units
+(int, int, int, cell) get_user(slice owner_address, cell players) method_id {
+    ;; int paid_until, int in_game, int bans_counter, cell units
     cell user = idict_get_ref(players, 256, slice_hash(owner_address));
     if (user.null?()) {
-        return (0, 0, user);
+        return (0, 0, 0, user);
     }
     slice s_user = user.begin_parse();
-    return (s_user~load_uint(32), s_user~load_uint(32), s_user.preload_dict());
+    return (s_user~load_uint(32), s_user~load_uint(1), s_user~load_uint(32), s_user.preload_dict());
 
 }
 
@@ -59,8 +60,8 @@ int get_price(cell prices, int unit_id, int unit_level) method_id {
 }
 
 cell update_units_counter(cell units, int unit_id, int unit_level, int units_counter, int shouldAdd) impure {
-    cell unit = udict_get_ref(units, 16, unit_id);
-    (slice s_counter, int f) = unit.udict_get?(8, unit_level);
+    cell units_by_level = udict_get_ref(units, 8, unit_level);
+    (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
     int counter = 0;
     if (f) {
         counter = s_counter.preload_uint(16);
@@ -72,8 +73,8 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
         counter -= units_counter;
         throw_if(53, counter < 0); ;; underflow units of one type
     }
-    unit~udict_set(8, unit_level, begin_cell().store_uint(counter, 16).end_cell().begin_parse());
-    units~udict_set_ref(16, unit_id, unit);
+    units_by_level~udict_set(16, unit_id, begin_cell().store_uint(counter, 16).end_cell().begin_parse());
+    units~udict_set_ref(8, unit_level, unit);
     return units;
 }
 
@@ -82,11 +83,38 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
     int price = get_price(prices, unit_id, unit_level);
     throw_if(50, price == -1); ;; unit can't be sold
     throw_if(51, price * units_counter > msg_value); ;; unsufficient funds
-    (int paid_until, int bans_counter, cell units) = get_user(owner_address, players);
+    (int paid_until, int in_game, int bans_counter, cell units) = get_user(owner_address, players);
     units = update_units_counter(units, unit_id, unit_level, units_counter, true);
-    players = create_user(owner_address, players, paid_until, bans_counter, units);
+    players = create_user(owner_address, players, paid_until, in_game, bans_counter, units);
     return store_data(players, matches, prices, ban_requests, stored_seqno, public_key);
 }
+
+cell push_queue(cell matches, int idx, slice owner_address, int valid_until, cell unit_pool) impure {
+    ;; get 1 
+    ;; set idx => slice valid_until, int owner_address, unit_pool
+    return matches;
+}
+
+cell start_game(cell matches) impure {
+    ;; get 1
+    ;; push 1 to 0
+    return matches;
+}
+
+() line_up_to_match(slice owner_address, int valid_until, cell unit_pool, int msg_value) impure {
+    ;; unit pool is [(counter) (type)](8)
+    ;; check user status
+    ;; check game fee and valid unit
+    ;; for each level 
+    ;;     check if sum(counter) == 8
+    ;;     decrement units
+    ;; push queue
+    ;; if queue.length == 8
+    ;;      start game
+    ;; block user
+}
+
+
 
 () recv_external(slice in_msg) impure {
   var signature = in_msg~load_bits(512);
