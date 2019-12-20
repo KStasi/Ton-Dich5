@@ -20,7 +20,7 @@
         .end_cell());
 }
 
-cell store_user(slice owner_address, cell users, int paid_until, int bans_counter, cell units) impure {
+cell create_user(slice owner_address, cell users, int paid_until, int bans_counter, cell units) impure {
     cell user = begin_cell()
         .store_uint(paid_until, 32)
         .store_uint(bans_counter, 32)
@@ -30,15 +30,62 @@ cell store_user(slice owner_address, cell users, int paid_until, int bans_counte
     return users;
 }
 
-(int, int, cell) load_user(slice owner_address, cell users) method_id {
+(int, int, cell) get_user(slice owner_address, cell players) method_id {
     ;; int paid_until, int bans_counter, cell units
-    cell user = idict_get_ref(users, 256, slice_hash(owner_address));
+    cell user = idict_get_ref(players, 256, slice_hash(owner_address));
     if (user.null?()) {
-        return (-1, -1, user);
+        return (0, 0, user);
     }
     slice s_user = user.begin_parse();
     return (s_user~load_uint(32), s_user~load_uint(32), s_user.preload_dict());
 
+}
+
+() update_prices(cell new_prices) impure {
+    (cell players, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
+    store_data(players, matches, new_prices, ban_requests, stored_seqno + 1, public_key);
+}
+
+int get_price(cell prices, int unit_id, int unit_level) method_id {
+    cell unit = udict_get_ref(prices, 16, unit_id);
+    if (unit.null?()) {
+        return -1;
+    }
+    (slice s_price, int f) = unit.udict_get?(8, unit_level);
+    ifnot (f) {
+        return -1;
+    }
+    return s_price.preload_uint(32);
+}
+
+cell update_units_counter(cell units, int unit_id, int unit_level, int units_counter, int shouldAdd) impure {
+    cell unit = udict_get_ref(units, 16, unit_id);
+    (slice s_counter, int f) = unit.udict_get?(8, unit_level);
+    int counter = 0;
+    if (f) {
+        counter = s_counter.preload_uint(16);
+    }
+    if (shouldAdd) {
+        counter += units_counter;
+        throw_if(52, counter > 255); ;; too many units of one type
+    } else {
+        counter -= units_counter;
+        throw_if(53, counter < 0); ;; underflow units of one type
+    }
+    unit~udict_set(8, unit_level, begin_cell().store_uint(counter, 16).end_cell().begin_parse());
+    units~udict_set_ref(16, unit_id, unit);
+    return units;
+}
+
+() buy_unit(slice owner_address, int unit_id, int unit_level, int units_counter, int msg_value) impure {
+    (cell players, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
+    int price = get_price(prices, unit_id, unit_level);
+    throw_if(50, price == -1); ;; unit can't be sold
+    throw_if(51, price * units_counter > msg_value); ;; unsufficient funds
+    (int paid_until, int bans_counter, cell units) = get_user(owner_address, players);
+    units = update_units_counter(units, unit_id, unit_level, units_counter, true);
+    players = create_user(owner_address, players, paid_until, bans_counter, units);
+    return store_data(players, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
 () recv_external(slice in_msg) impure {
