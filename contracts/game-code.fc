@@ -130,6 +130,36 @@ cell store_player(cell players, int idx, int player_hash, cell unit_pool, int go
     return players;
 }
 
+cell create_game(cell games, int idx, int should_start_round, cell unit_pool_by_level, cell players, cell current_round, cell last_round_results, int timeout) impure {
+    cell game = begin_cell()
+        .store_uint(should_start_round,1)
+        .store_uint(timeout, 32) ;; TODO: should update
+        .store_dict(unit_pool_by_level)
+        .store_dict(players)
+        .store_dict(current_round)
+        .store_dict(last_round_results)
+        .end_cell();
+    games~udict_set_ref(8, idx, game);
+    return games;
+}
+
+(int, int, cell, cell, cell,cell) get_game(cell games, int idx) impure {
+    ;; int should_start_round, int timeout, cell unit_pool_by_level, cell players, cell current_round, cell last_round_results
+    cell game = udict_get_ref(games, 8, idx);
+    if (game.null?()) {
+        return (0, 0, game, game, game, game);
+    }
+    slice s_game = game.begin_parse();
+    return (
+        s_game~load_uint(1),
+        s_game~load_uint(32),
+        s_game~load_dict(),
+        s_game~load_dict(),
+        s_game~load_dict(),
+        s_game~load_dict()
+    );
+}
+
 cell start_game(cell matches) impure {
     cell queue = udict_get_ref(matches, 2, 0);
     cell games = udict_get_ref(matches, 2, 1);
@@ -154,14 +184,7 @@ cell start_game(cell matches) impure {
     if(f) {
         idx += 1;
     }
-    cell game = begin_cell()
-        .store_dict(unit_pool_by_level)
-        .store_dict(players)
-        .store_dict(new_dict())
-        .store_dict(new_dict())
-        .store_uint(720000, 32) ;; TODO: should update
-        .end_cell();
-    games~udict_set_ref(8, idx, game);
+    games = create_game(games, idx, true, unit_pool_by_level, players, new_dict(), new_dict(), 720000);
     matches~udict_set_ref(2, 0, queue);
     matches~udict_set_ref(2, 1, games);
     return matches;
@@ -194,8 +217,6 @@ cell start_game(cell matches) impure {
     users = create_user(owner_address, users, paid_until, true, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
-
-
 
 () recv_external(slice in_msg) impure {
   var signature = in_msg~load_bits(512);
