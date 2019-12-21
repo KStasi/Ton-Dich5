@@ -219,13 +219,11 @@ cell start_game(cell matches) impure {
 }
 
 () recv_external(slice in_msg) impure {
-  var signature = in_msg~load_bits(512);
-  var cs = in_msg;
-  var (msg_seqno, valid_until) = (cs~load_uint(32), cs~load_uint(32));
+  slice signature = in_msg~load_bits(512);
+  slice cs = in_msg;
+  (int msg_seqno, int valid_until) = (cs~load_uint(32), cs~load_uint(32));
   throw_if(35, valid_until <= now());
-  var ds = get_data().begin_parse();
   (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
-  ds.end_parse();
   throw_unless(33, msg_seqno == stored_seqno);
   throw_unless(34, check_signature(slice_hash(in_msg), signature, public_key));
   accept_message();
@@ -238,13 +236,13 @@ cell start_game(cell matches) impure {
 }
 
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
-  var cs = in_msg_cell.begin_parse();
-  var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+  slice cs = in_msg_cell.begin_parse();
+  int flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
   if (flags & 1) {
     ;; ignore all bounced messages
     return ();
   }
-  var s_addr = cs~load_msg_addr();
+  slice s_addr = cs~load_msg_addr();
   if (in_msg.slice_empty?()) {
     ;; inbound message has empty body
     return ();
