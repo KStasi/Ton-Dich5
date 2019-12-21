@@ -237,6 +237,31 @@ cell start_game(cell matches) impure {
   store_data(users, matches, prices, ban_requests, stored_seqno + 1, public_key);
 }
 
-() recv_internal(slice in_msg) impure {
-  ;; do nothing for internal messages
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+  var cs = in_msg_cell.begin_parse();
+  var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+  if (flags & 1) {
+    ;; ignore all bounced messages
+    return ();
+  }
+  var s_addr = cs~load_msg_addr();
+  if (in_msg.slice_empty?()) {
+    ;; inbound message has empty body
+    return ();
+  }
+  int op = in_msg~load_uint(32);
+  if (op == 0) {
+    ;; simple transfer with comment, return
+    return ();
+  }
+  int query_id = in_msg~load_uint(64);
+  if (op == 0xaaeeee) {
+    (int unit_id, int unit_level, int units_counter) = (in_msg~load_uint(16), in_msg~load_uint(8), in_msg~load_uint(16));
+    return buy_unit(s_addr, unit_id, unit_level, units_counter, msg_value);
+  }
+  if (op == 0xbbeeee) {
+    (int valid_until, cell unit_pool) = (in_msg~load_uint(32), in_msg~load_ref());
+    return line_up_to_match(s_addr, valid_until, unit_pool, msg_value);
+  }
+  return ();
 }
