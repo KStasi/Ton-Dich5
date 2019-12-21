@@ -1,6 +1,8 @@
 (cell, int, int) udict_get_min_ref(cell dict, int key_len) asm "DICTUMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (cell, int, int) udict_get_max_ref(cell dict, int key_len) asm "DICTUMAXREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (cell, (int, cell, int)) ~udict::delete_get_min_ref(cell dict, int key_len) asm(-> 0 2 1 3) "DICTUREMMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
+(cell, int, cell, int) udict_delete_get_min_ref(cell dict, int key_len) asm(-> 0 2 1 3) "DICTUREMMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
+
 forall A, B, C, D, X, Y, Z, W -> tuple tuple8(A a, B b, C c, D d, X x, Y y, Z z, W w) asm "8 TUPLE";
 int tuple_len(tuple t) asm "TLEN";	
 ;; forall X -> X tuple_get_el(tuple t, int k) asm(-> 1 0) "INDEX";
@@ -122,7 +124,7 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
 
 (int, int, cell) get_candidate(cell player) method_id {
     slice s_player = player.begin_parse();
-    return (s_player~load_uint(32), s_player~load_int(256), s_player.preload_ref());
+    return (s_player~load_uint(32), s_player~load_int(256), s_player.preload_dict());
 }
 
 cell store_player(cell players, int idx, int player_hash, cell unit_pool, int gold, int level, int exp, int hp) impure {
@@ -140,7 +142,7 @@ cell store_player(cell players, int idx, int player_hash, cell unit_pool, int go
 
 cell create_game(cell games, int idx, int should_start_round, cell unit_pool_by_level, cell players, cell current_round, cell last_round_results, int timeout) impure {
     cell game = begin_cell()
-        .store_uint(should_start_round,1)
+        .store_int(should_start_round, 1)
         .store_uint(timeout, 32) ;; TODO: should update
         .store_dict(unit_pool_by_level)
         .store_dict(players)
@@ -174,23 +176,26 @@ cell start_game(cell matches) impure {
     cell unit_pool_by_level = new_dict(); 
     int i = 0;
     cell players = new_dict();
-    (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
+    var (queue, idx, player, f) = udict_delete_get_min_ref(queue, 4);
     while (f) {
-        (int valid_until, int player_hash, cell unit_pool) = get_candidate(player);
-        (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
-        while (f) {
+        dump_stack();
+        var (valid_until, player_hash, unit_pool) = get_candidate(player);
+        var (unit_pool, level, level_units, f1) = udict_delete_get_min(unit_pool, 4);
+        while (f1) {
             while (level_units.slice_bits()) {
                 (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
                 unit_pool_by_level = update_units_counter(unit_pool_by_level, unit_id, level, counter, true);
             }
-            (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+            (unit_pool, level, level_units, f1) = udict_delete_get_min(unit_pool, 4);
         }
         players = store_player(players, idx, player_hash, new_dict(), 1, 1, 0, 100);
-        (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
+        (queue, idx, player, f) = udict_delete_get_min_ref(queue, 4);
     }
-    (cell last_game, int idx, int f) = udict_get_max_ref(games, 8);
+    var (last_game, idx, f) = udict_get_max_ref(games, 8);
     if(f) {
         idx += 1;
+    } else {
+        idx = 0;
     }
     games = create_game(games, idx, true, unit_pool_by_level, players, new_dict(), new_dict(), 720000);
     matches~udict_set_ref(2, 0, queue);
