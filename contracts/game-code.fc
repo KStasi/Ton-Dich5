@@ -1,6 +1,9 @@
 (cell, int, int) udict_get_min_ref(cell dict, int key_len) asm "DICTUMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (cell, int, int) udict_get_max_ref(cell dict, int key_len) asm "DICTUMAXREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (cell, (int, cell, int)) ~udict::delete_get_min_ref(cell dict, int key_len) asm(-> 0 2 1 3) "DICTUREMMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
+forall A, B, C, D, X, Y, Z, W -> tuple tuple8(A a, B b, C c, D d, X x, Y y, Z z, W w) asm "8 TUPLE";
+int tuple_len(tuple t) asm "TLEN";	
+;; forall X -> X tuple_get_el(tuple t, int k) asm(-> 1 0) "INDEX";
 
 (cell, cell, cell, cell, int, int) load_data() impure {
     ;; dict users, dict matches, dict prices, dict ban_requests, int seqno, int pubkey
@@ -137,7 +140,24 @@ cell start_game(cell matches) impure {
     (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
     while (f) {
         (int valid_until, int player_hash, cell unit_pool) = get_candidate(player);
-        ;; set units by level 
+        (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+        while (f) {
+            while (level_units.slice_bits()) {
+                ;; TODO: move to separate function
+                (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
+                unit_pool_by_level = update_units_counter(unit_pool_by_level, unit_id, level, counter, true);
+                ;; cell level_unit_pool = udict_get_ref(unit_pool_by_level, 8, level);
+                ;; (slice s_counter, int f) = level_unit_pool.udict_get?(16, unit_id);
+                ;; if (f) {
+                ;;     counter += s_counter.preload_uint(16);
+                ;; }
+                ;; level_unit_pool~udict_set(16, unit_id, counter);
+                ;; unit_pool_by_level~udict_set_ref(4, level, level_unit_pool);
+                ;;
+            }
+            (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+        }
+
         players = store_player(users, idx, player_hash, new_dict(), 1, 1, 0, 100);
         (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
     }
