@@ -11,7 +11,10 @@ variable unit_level
 variable units_counter 
 variable prices 
 variable unit_price_lists
+variable user_list
 variable users
+{ <b swap 32 u, swap 1 u, swap 32 u, swap dict, b> <s } : create-user
+{ users @ 256 udict!+ not abort"cannot add user to dictionary" users ! } : add-user
 { <b swap 32 u, b> <s } : create-price
 { prices @ 8 udict!+ not abort"cannot add price to dictionary" prices ! } : add-price
 { <b swap dict, b> <s } : create-unit-prices
@@ -86,7 +89,8 @@ constant c7
 <b b{0100} s, bounce 1 i, b{000100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
 
 dictnew users !
-
+dictnew 0 0 1570570873 create-user 
+<b b{00} s, b> hashu .s add-user .s
 
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
@@ -96,5 +100,5 @@ boc>B <b
     unit_price_lists @ dict,
     dictnew dict,
     0 32 u,
-    file-base +".pk" load-generate-keypair constant game_pk B, 
+    file-base +".pk" load-generate-keypair drop B, 
 b> boc>B B= test_state

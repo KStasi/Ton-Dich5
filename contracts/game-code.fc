@@ -28,23 +28,23 @@ int tuple_len(tuple t) asm "TLEN";
 }
 
 cell create_user(slice owner_address, cell users, int paid_until, int in_game, int bans_counter, cell units) impure {
-    cell user = begin_cell()
+    slice user = begin_cell()
         .store_uint(paid_until, 32)
         .store_uint(in_game, 1)
         .store_uint(bans_counter, 32)
         .store_dict(units)
-        .end_cell();
-    users~idict_set_ref(256, slice_hash(owner_address), user);
+        .end_cell()
+        .begin_parse();
+    users~udict_set(256, slice_hash(owner_address), user);
     return users;
 }
 
 (int, int, int, cell) get_user(slice owner_address, cell users) method_id {
     ;; int paid_until, int in_game, int bans_counter, cell units
-    cell user = idict_get_ref(users, 256, slice_hash(owner_address));
-    if (user.null?()) {
-        return (0, 0, 0, user);
+    (slice s_user, int f) = users.udict_get?(256, slice_hash(owner_address));
+    ifnot (f) {
+        return (0, 0, 0, new_dict());
     }
-    slice s_user = user.begin_parse();
     return (s_user~load_uint(32), s_user~load_uint(1), s_user~load_uint(32), s_user.preload_dict());
 
 }
@@ -98,7 +98,7 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
     throw_if(51, price * units_counter > msg_value); ;; unsufficient funds
     (int paid_until, int in_game, int bans_counter, cell units) = get_user(owner_address, users);
     units = update_units_counter(units, unit_id, unit_level, units_counter, true);
-    users = create_user(owner_address, users, paid_until, in_game, bans_counter, units);
+    users = create_user(owner_address, users, now() + 100000, in_game, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
