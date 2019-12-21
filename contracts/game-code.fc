@@ -219,37 +219,42 @@ cell start_game(cell matches) impure {
 }
 
 () recv_external(slice in_msg) impure {
-  slice signature = in_msg~load_bits(512);
-  slice cs = in_msg;
-  (int msg_seqno, int valid_until) = (cs~load_uint(32), cs~load_uint(32));
-  throw_if(35, valid_until <= now());
-  (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
-  throw_unless(33, msg_seqno == stored_seqno);
-  throw_unless(34, check_signature(slice_hash(in_msg), signature, public_key));
-  accept_message();
-  while (cs.slice_refs()) {
-    var mode = cs~load_uint(8);
-    send_raw_message(cs~load_ref(), mode);
-  }
-  cs.end_parse();
-  store_data(users, matches, prices, ban_requests, stored_seqno + 1, public_key);
+    slice signature = in_msg~load_bits(512);
+    slice cs = in_msg;
+    (int msg_seqno, int valid_until) = (cs~load_uint(32), cs~load_uint(32));
+    throw_if(35, valid_until <= now());
+    (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
+    throw_unless(33, msg_seqno == stored_seqno);
+    throw_unless(34, check_signature(slice_hash(in_msg), signature, public_key));
+    accept_message();
+    int op = cs~load_uint(32);
+    if (op == 0) {
+        while (cs.slice_refs()) {
+            var mode = cs~load_uint(8);
+            send_raw_message(cs~load_ref(), mode);
+        }
+        cs.end_parse();
+        return store_data(users, matches, prices, ban_requests, stored_seqno + 1, public_key);
+    }
+    if (op == 0xaa1122) {
+        cell new_prices = cs~load_dict();
+        return update_prices(new_prices);
+    }
+    return ();
 }
 
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
   slice cs = in_msg_cell.begin_parse();
-  int flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+  int flags = cs~load_uint(4);
   if (flags & 1) {
-    ;; ignore all bounced messages
     return ();
   }
   slice s_addr = cs~load_msg_addr();
   if (in_msg.slice_empty?()) {
-    ;; inbound message has empty body
     return ();
   }
   int op = in_msg~load_uint(32);
   if (op == 0) {
-    ;; simple transfer with comment, return
     return ();
   }
   int query_id = in_msg~load_uint(64);

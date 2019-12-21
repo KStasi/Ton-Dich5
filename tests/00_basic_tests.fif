@@ -45,7 +45,7 @@ constant c7
 
 // test # 0 external message without options
 
-<b 0 32 u, now timeout + 32 u, b>
+<b 0 32 u, now timeout + 32 u, 0 32 u, b>
 dup hashu game_pk ed25519_sign_uint
 <b swap B, swap <s s, b>
 <s ext_msg_body !  
