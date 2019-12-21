@@ -276,7 +276,7 @@ cell start_game(cell matches) impure {
 }
 
 ;; getters
-(cell, cell, cell, cell, int, int) getstorage() nethod_id {
+(cell, cell, cell, cell, int, int) getstorage() method_id {
     ;; dict users, dict matches, dict prices, dict ban_requests, int seqno, int pubkey
     var ds = get_data().begin_parse();
     return (ds~load_dict(),
