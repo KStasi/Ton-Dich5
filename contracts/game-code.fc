@@ -55,10 +55,16 @@ cell create_user(slice owner_address, cell users, int paid_until, int in_game, i
 }
 
 int get_price(cell prices, int unit_id, int unit_level) method_id {
-    cell unit = udict_get_ref(prices, 16, unit_id);
-    if (unit.null?()) {
+    ;;cell unit = udict_get_ref(prices, 16, unit_id);
+    (slice s_unit, int f) = prices.udict_get?(16, unit_id);
+    ifnot (f) {
         return -1;
     }
+    cell unit = s_unit~load_ref();
+    if (unit.null?()) {
+        return 0; 
+    }
+
     (slice s_price, int f) = unit.udict_get?(8, unit_level);
     ifnot (f) {
         return -1;

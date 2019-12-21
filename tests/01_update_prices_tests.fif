@@ -5,7 +5,6 @@
 variable updated_storage
 variable amount
 variable ext_msg_body
-variable price#
 variable prices 
 variable unit_price_lists 
 { <b swap 32 u, b> <s } : create-price
