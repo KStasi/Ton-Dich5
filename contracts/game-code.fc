@@ -134,7 +134,6 @@ cell start_game(cell matches) impure {
     cell queue = udict_get_ref(matches, 2, 0);
     cell games = udict_get_ref(matches, 2, 1);
     cell unit_pool_by_level = new_dict(); 
-    (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
     int i = 0;
     cell players = new_dict();
     (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
@@ -143,22 +142,12 @@ cell start_game(cell matches) impure {
         (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
         while (f) {
             while (level_units.slice_bits()) {
-                ;; TODO: move to separate function
                 (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
                 unit_pool_by_level = update_units_counter(unit_pool_by_level, unit_id, level, counter, true);
-                ;; cell level_unit_pool = udict_get_ref(unit_pool_by_level, 8, level);
-                ;; (slice s_counter, int f) = level_unit_pool.udict_get?(16, unit_id);
-                ;; if (f) {
-                ;;     counter += s_counter.preload_uint(16);
-                ;; }
-                ;; level_unit_pool~udict_set(16, unit_id, counter);
-                ;; unit_pool_by_level~udict_set_ref(4, level, level_unit_pool);
-                ;;
             }
             (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
         }
-
-        players = store_player(users, idx, player_hash, new_dict(), 1, 1, 0, 100);
+        players = store_player(players, idx, player_hash, new_dict(), 1, 1, 0, 100);
         (int idx, cell player, int f) = queue~udict::delete_get_min_ref(4);
     }
     (cell last_game, int idx, int f) = udict_get_max_ref(games, 8);
@@ -170,7 +159,7 @@ cell start_game(cell matches) impure {
         .store_dict(players)
         .store_dict(new_dict())
         .store_dict(new_dict())
-        .store_uint(valid_until, 32) ;; update
+        .store_uint(720000, 32) ;; TODO: should update
         .end_cell();
     games~udict_set_ref(8, idx, game);
     matches~udict_set_ref(2, 0, queue);
@@ -180,15 +169,30 @@ cell start_game(cell matches) impure {
 
 () line_up_to_match(slice owner_address, int valid_until, cell unit_pool, int msg_value) impure {
     ;; unit pool is [(counter) (type)](8)
-    ;; check user status
-    ;; check game fee and valid unit
-    ;; for each level 
-    ;;     check if sum(counter) == 8
-    ;;     decrement units
-    ;; push queue
-    ;; if queue.length == 8
-    ;;      start game
-    ;; block user
+    throw_if(54, msg_value < 1000); ;; fee
+    throw_if(55, valid_until < now() + 30); ;; interval limit
+    throw_if(56, valid_until > now() + 720000); ;; interval limit
+    (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
+    (int paid_until, int in_game, int bans_counter, cell units) = get_user(owner_address, users);
+    throw_if(57, in_game); ;; only one match is allowed simultaneously
+    (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+    while (f) {
+        int level_counter = 0;
+        while (level_units.slice_bits()) {
+            (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
+            units = update_units_counter(units, unit_id, level, counter, false);
+            level_counter += counter;
+        }
+        throw_unless(58, level_counter == 8); ;; exactly 8 units per level are allowed
+        (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+    }
+
+    (matches, int queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
+    if (queue_length == 7) {
+        start_game(matches);
+    }
+    users = create_user(owner_address, users, paid_until, true, bans_counter, units);
+    return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
 
@@ -204,7 +208,6 @@ cell start_game(cell matches) impure {
   throw_unless(33, msg_seqno == stored_seqno);
   throw_unless(34, check_signature(slice_hash(in_msg), signature, public_key));
   accept_message();
-  cs~touch();
   while (cs.slice_refs()) {
     var mode = cs~load_uint(8);
     send_raw_message(cs~load_ref(), mode);
