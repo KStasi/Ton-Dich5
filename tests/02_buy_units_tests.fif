@@ -94,3 +94,4 @@ dictnew 0 0 1570570873 create-user
 
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
+// state can't be quickly and properlly tested now as there is no way to set cell as value in fift dicts

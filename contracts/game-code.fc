@@ -30,7 +30,7 @@ int tuple_len(tuple t) asm "TLEN";
 cell create_user(slice owner_address, cell users, int paid_until, int in_game, int bans_counter, cell units) impure {
     slice user = begin_cell()
         .store_uint(paid_until, 32)
-        .store_uint(in_game, 1)
+        .store_int(in_game, 1)
         .store_uint(bans_counter, 32)
         .store_dict(units)
         .end_cell()
@@ -45,7 +45,7 @@ cell create_user(slice owner_address, cell users, int paid_until, int in_game, i
     ifnot (f) {
         return (0, 0, 0, new_dict());
     }
-    return (s_user~load_uint(32), s_user~load_uint(1), s_user~load_uint(32), s_user.preload_dict());
+    return (s_user~load_uint(32), s_user~load_int(1), s_user~load_uint(32), s_user.preload_dict());
 
 }
 
@@ -104,13 +104,15 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
 
 (cell, int) push_queue(cell matches, slice owner_address, int valid_until, cell unit_pool) impure {
     cell queue = udict_get_ref(matches, 2, 0);
-    (cell last_player, int idx, int f) = udict_get_max_ref(queue, 4);
-    if(f) {
+    var (last_player, idx, f) = udict_get_max_ref(queue, 4);
+    if (f) {
         idx += 1;
+    } else {
+        idx = 0;
     }
     cell player = begin_cell()
         .store_uint(valid_until, 32)
-        .store_int(slice_hash(owner_address), 256)
+        .store_uint(slice_hash(owner_address), 256)
         .store_dict(unit_pool)
         .end_cell();
     queue~udict_set_ref(4, idx, player);
@@ -200,23 +202,25 @@ cell start_game(cell matches) impure {
     ;; unit pool is [(counter) (type)](8)
     throw_if(54, msg_value < 1000); ;; fee
     throw_if(55, valid_until < now() + 30); ;; interval limit
-    throw_if(56, valid_until > now() + 720000); ;; interval limit
-    (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
-    (int paid_until, int in_game, int bans_counter, cell units) = get_user(owner_address, users);
+    throw_if(56, valid_until > now() + 7200); ;; interval limit
+    var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
+    var (paid_until, in_game, bans_counter, units) = get_user(owner_address, users);
     throw_if(57, in_game); ;; only one match is allowed simultaneously
-    (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
+    var (unit_pool, level,  level_units, f) = udict_delete_get_min(unit_pool, 4);
+    int level_counter = 0;
     while (f) {
-        int level_counter = 0;
         while (level_units.slice_bits()) {
             (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
-            units = update_units_counter(units, unit_id, level, counter, false);
             level_counter += counter;
+            units = update_units_counter(units, unit_id, level, counter, false);
         }
-        throw_unless(58, level_counter == 8); ;; exactly 8 units per level are allowed
-        (int level, slice level_units, int f) = unit_pool~udict::delete_get_min(4);
-    }
 
-    (matches, int queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
+        throw_unless(58, level_counter == 8); ;; exactly 8 units per level are allowed
+        (unit_pool, level, level_units, f) = udict_delete_get_min(unit_pool, 4);
+        level_counter = 0;
+    }
+    ;; TODO: add level number check
+    var (matches, queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
     if (queue_length == 7) {
         start_game(matches);
     }
