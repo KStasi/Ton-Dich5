@@ -90,7 +90,7 @@ constant c7
 
 dictnew users !
 dictnew 0 0 1570570873 create-user 
-<b b{00} s, b> hashu .s add-user .s
+<b b{00} s, b> hashu add-user
 
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
