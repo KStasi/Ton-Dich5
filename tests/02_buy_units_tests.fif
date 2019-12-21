@@ -94,11 +94,3 @@ dictnew 0 0 1570570873 create-user
 
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
-boc>B <b 
-    users @ dict,
-    dictnew dict,
-    unit_price_lists @ dict,
-    dictnew dict,
-    0 32 u,
-    file-base +".pk" load-generate-keypair drop B, 
-b> boc>B B= test_state
