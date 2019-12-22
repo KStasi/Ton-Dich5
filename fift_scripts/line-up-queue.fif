@@ -2,7 +2,7 @@
 "TonUtil.fif" include
 "Asm.fif" include
 
-"build/buy-unit"  constant savefile
+"build/line-up"  constant savefile
 variable units
 1 :$1..n
 $1 "./fift_scripts/units-source.fif" replace-if-null  =: units-source
