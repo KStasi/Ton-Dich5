@@ -4,6 +4,7 @@
 128933 constant getuser
 71227 constant getprice
 100842 constant getunits
+116502 constant getgame
 
 // test # 0 get user simple test
 { = test_ret_value } : test
@@ -48,3 +49,19 @@ send-request
 test_code
 drop
 2 test
+
+// test # 3 get game
+0 getgame code updated_storage @ c7 runvmctx
+test_code
+drop
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
+
+
+// test # 5 get queue length
+getqueuelen code updated_storage @ c7 runvmctx
+test_code
+drop
+0 test
+

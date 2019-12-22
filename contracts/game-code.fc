@@ -235,7 +235,7 @@ cell start_game(cell matches) impure {
     ;; TODO: add level number check
     var (matches, queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
     if (queue_length == 7) {
-        start_game(matches);
+        matches = start_game(matches);
     }
     users = create_user(owner_address, users, paid_until, true, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
@@ -323,7 +323,8 @@ int getprice(int unit_id, int unit_level) method_id {
 (int, int, cell, cell, cell,cell) getgame(int idx) method_id {
     var ds = get_data().begin_parse();
     (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
-    return get_game(matches, idx);
+    cell games = udict_get_ref(matches, 2, 1);
+    return get_game(games, idx);
 }
 
 int getqueuelen() method_id {
@@ -332,7 +333,7 @@ int getqueuelen() method_id {
     cell queue = udict_get_ref(matches, 2, 0);
     var (last_player, idx, f) = udict_get_max_ref(queue, 4);
     if (f) {
-        return idx;
+        return idx + 1;
     } else {
         return 0;
     }
