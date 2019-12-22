@@ -30,3 +30,22 @@ Owner has the right to ban users.
 ## Project Stages
 
 ## How to use
+
+The project has the following structure:
+Dich5
+	build/
+    contracts/
+	fift_scripts/
+	lite-client/
+	sh_scripts/
+	tests/
+
+
+In the *sh_scripts* game stages sre present.
+
+# Testing
+
+Run:
+```
+./sh_scripts/test.sh 
+```
