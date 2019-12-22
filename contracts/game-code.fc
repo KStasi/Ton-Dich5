@@ -306,13 +306,23 @@ cell remove_expired(cell dict, int key_len) impure {
 
 cell remove_matches(cell matches) impure {
     ;; int should_start_round, int timeout, cell unit_pool_by_level, cell players, cell current_round, cell last_round_results
-;;    cell game = udict_get_ref(games, 8, idx);
-;;    if (game.null?()) {
-;;        return matches;
-;;    }
-;;    int valid_until = game.begin_parse().preload_uint(32);
-;;    return matches;
-    return new_dict();
+    var (matches, idx, queue, f) = udict_delete_get_min_ref(matches, 2);
+    var (matches, idx, games, f) = udict_delete_get_min_ref(matches, 2);
+    ifnot (queue.null?()) {
+        ;;queue = remove_expired(queue, 4);
+        ;;matches~udict_set_ref(2, 0, queue);
+        ifnot (queue.null?()) {
+            matches~udict_set_ref(2, 0, queue);
+        }
+    }
+    ifnot (games.null?()) {
+        games = remove_expired(games, 4);
+        matches~udict_set_ref(2, 1, games);
+        ifnot (games.null?()) {
+            matches~udict_set_ref(2, 1, games);
+        }
+    }
+    return matches;
 }
 
 
