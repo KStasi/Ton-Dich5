@@ -319,3 +319,21 @@ int getprice(int unit_id, int unit_level) method_id {
     (int paid_until, int in_game, int bans_counter, cell units) = getuser(wc, addr);
     return get_unit(units, unit_id, unit_level);
 }
+
+(int, int, cell, cell, cell,cell) getgame(int idx) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    return get_game(matches, idx);
+}
+
+int getqueuelen() method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    cell queue = udict_get_ref(matches, 2, 0);
+    var (last_player, idx, f) = udict_get_max_ref(queue, 4);
+    if (f) {
+        return idx;
+    } else {
+        return 0;
+    }
+}
