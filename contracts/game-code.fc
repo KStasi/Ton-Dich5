@@ -74,6 +74,16 @@ int get_price(cell prices, int unit_id, int unit_level) method_id {
     return s_price.preload_uint(32);
 }
 
+int get_unit(cell units, int unit_id, int unit_level) method_id {
+    cell units_by_level = udict_get_ref(units, 8, unit_level);
+    (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
+    int counter = 0;
+    if (f) {
+        counter = s_counter.preload_uint(16);
+    }
+    return counter;
+}
+
 cell update_units_counter(cell units, int unit_id, int unit_level, int units_counter, int shouldAdd) impure {
     cell units_by_level = udict_get_ref(units, 8, unit_level);
     (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
@@ -307,5 +317,5 @@ int getprice(int unit_id, int unit_level) method_id {
 
 (int) getunits(int wc, int addr, int unit_id, int unit_level) method_id {
     (int paid_until, int in_game, int bans_counter, cell units) = getuser(wc, addr);
-    return get_price(units, unit_id, unit_level);
+    return get_unit(units, unit_id, unit_level);
 }
