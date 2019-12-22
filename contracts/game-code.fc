@@ -312,6 +312,7 @@ cell remove_matches(cell matches) impure {
 ;;    }
 ;;    int valid_until = game.begin_parse().preload_uint(32);
 ;;    return matches;
+    return new_dict();
 }
 
 
