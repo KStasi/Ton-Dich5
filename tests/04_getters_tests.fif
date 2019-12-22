@@ -1,0 +1,9 @@
+#!/usr/bin/env fift -s
+"./03_line_up_to_match_tests.fif" include
+108902 constant getstorage
+128933 constant getuser
+71227 constant getprice
+100842 constant getunits
+
+
+-1 <b 1 32 u, b> hashu getuser code updated_storage @ c7 runvmctx

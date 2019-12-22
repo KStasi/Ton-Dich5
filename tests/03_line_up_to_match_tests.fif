@@ -92,12 +92,12 @@ constant c7
 <b 0xaaeeee 32 u, 0 64 u, unit_id @ 16 u, unit_level @ 8 u, units_counter @ 16 u,  b> 
 <s int_msg_body !  
 
-<b b{0100} s, bounce 1 i, b{0100} s, -1 <b 1 32 u, b> hashu addr, b{100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
+<b b{00} s, bounce 1 i, b{0100} s, -1 <b 1 32 u, b> hashu addr, b{100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
 updated_storage !
 
-{ <b b{0100} s, bounce 1 i, b{0100} s, -1 <b idx @ 32 u, b> hashu addr, b{100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
+{ <b b{00} s, bounce 1 i, b{0100} s, -1 <b idx @ 32 u, b> hashu addr, b{100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
 amount @ int_message @ int_msg_body @ recv_internal code updated_storage @ c7 runvmctx
 test_code
 updated_storage ! } : send-request

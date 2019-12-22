@@ -178,7 +178,6 @@ cell start_game(cell matches) impure {
     cell players = new_dict();
     var (queue, idx, player, f) = udict_delete_get_min_ref(queue, 4);
     while (f) {
-        dump_stack();
         var (valid_until, player_hash, unit_pool) = get_candidate(player);
         var (unit_pool, level, level_units, f1) = udict_delete_get_min(unit_pool, 4);
         while (f1) {
@@ -293,4 +292,20 @@ cell start_game(cell matches) impure {
         ds~load_dict(), 
         ds~load_uint(32), 
         ds.preload_uint(256));
+}
+
+(int, int, int, cell) getuser(int wc, int addr) method_id {
+    cell users = get_data().begin_parse().preload_dict();
+    return get_user(begin_cell().store_uint(4, 3).store_int(wc, 8).store_uint(addr, 256).end_cell().begin_parse(), users);
+}
+
+int getprice(int unit_id, int unit_level) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches, cell prices) = (ds~load_dict(), ds~load_dict(), ds.preload_dict());
+    return get_price(prices, unit_id, unit_level);
+}
+
+(int) getunits(int wc, int addr, int unit_id, int unit_level) method_id {
+    (int paid_until, int in_game, int bans_counter, cell units) = getuser(wc, addr);
+    return get_price(units, unit_id, unit_level);
 }

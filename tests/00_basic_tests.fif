@@ -66,7 +66,7 @@ b>  boc>B B= test_state
 <b b> 
 <s int_msg_body !  
 
-<b b{0100} s, bounce 1 i, b{000100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
+<b b{00} s, bounce 1 i, b{000100} s, dest_addr addr, amount @ Gram, 0 9 64 32 + + 1+ u, int_msg_body @ s, b>  int_message !
 
 amount @ int_message @ int_msg_body @ recv_internal code initial_storage c7 runvmctx
 test_code
