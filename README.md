@@ -29,6 +29,8 @@ Owner has the right to ban users.
 
 ## Project Stages
 
+NOTE: only part of the solution is implemented now.
+
 ## How to use
 
 The project has the following structure:
@@ -41,7 +43,15 @@ Dich5
 	tests/
 
 
-In the *sh_scripts* game stages sre present.
+In the *sh_scripts* game flow sre present.
+
+1. *01_create_wallet.sh* is intended to create wallet for user if he doesn't have one. It isn't obligatory and he may just place it's keys and address to *build/*.
+2. If wallet wasn't brought by user, new one should be funded and then it's code is broadcasted by *02_broadcast_wallet.sh*
+3. *03_create_contract.sh* compile contract and create boc file for init.
+4. New contract is funded by new user's wallet and it's code is set by *04_broadcast_contract.sh*
+5. New price list is sent by *05_update_prices.sh*
+6. *06_buy_unit.sh* used to by few units.
+07. *07_line_up.sh* is used to line up to queue with units configured in *units-source.fif*.
 
 # Testing
 
