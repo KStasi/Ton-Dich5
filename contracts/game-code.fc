@@ -231,7 +231,6 @@ cell create_position(cell positions, cell locations, int idx) impure {
     return positions;
 }
 
-;; TODO: fix player id
 () arrange_units(slice owner_address, int player_idx, int idx, cell locations) impure {
     (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
@@ -456,6 +455,10 @@ cell start_game(cell matches) impure {
   if (op == 0xbbeeee) {
     (int valid_until, cell unit_pool) = (in_msg~load_uint(32), in_msg~load_ref());
     return line_up_to_match(s_addr, valid_until, unit_pool, msg_value);
+  }
+  if (op == 0xcceeee) {
+    (int player_idx, int idx, cell locations) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_dict());
+    return arrange_units(s_addr, player_idx, idx, locations);
   }
   return ();
 }
