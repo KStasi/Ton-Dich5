@@ -231,6 +231,9 @@ cell create_position(cell positions, cell locations, int idx) impure {
     return positions;
 }
 
+
+;; TODO: restrict changes
+;; TODO: store number of players in round
 () arrange_units(slice owner_address, int player_idx, int idx, cell locations) impure {
     (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
@@ -583,3 +586,15 @@ int getqueuelen() method_id {
     }
 }
 
+;; Global TODO:
+;; - add getter for player in round
+;; - add getter to find players idx
+;; - game idx getter
+;; - getter for locations
+;; - collect round results
+;; - end round
+;; - end game
+
+;; minor TOOD:
+;; - add method to complain
+;; - add method to ban user
