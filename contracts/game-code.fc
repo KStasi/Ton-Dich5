@@ -6,8 +6,10 @@
 
 ;; () nil() asm "NIL";
 forall X -> tuple tuple_push(tuple list, X x) asm "TPUSH";
-forall X -> tuple tuple_set_index(tuple list, X x, int k) asm "SETINDEX";
-forall X -> X tuple_get_index(tuple list, int k) asm "INDEX";
+forall X -> (tuple, X) tuple_pop(tuple list) asm "TPOP";
+forall X -> tuple tuple_set_index(tuple list, X x, int k) asm "SETINDEXVAR";
+forall X -> X tuple_get_index(tuple list, int k) asm "INDEXVAR";
+forall X -> tuple single(X x) asm "SINGLE";
 
 
 (cell, cell, cell, cell, int, int) load_data() method_id {
@@ -176,7 +178,7 @@ cell create_game(cell games, int idx, int valid_unitl, int should_start_round, c
     slice s_game = game.begin_parse();
     return (
         s_game~load_uint(32),
-        s_game~load_uint(1),
+        s_game~load_int(1),
         s_game~load_uint(32),
         s_game~load_dict(),
         s_game~load_dict(),
@@ -202,7 +204,11 @@ tuple distribute_units_per_level(int units_per_level_count, int players_count) i
         if (player_idx == players_count) {
             player_idx = 0;
         }
-        units_distribution_per_level = tuple_push(units_distribution_per_level, player_idx);
+        ifnot (tuple_len) {
+            units_distribution_per_level = single(player_idx + 1);
+        } else {
+            units_distribution_per_level = tuple_push(units_distribution_per_level, player_idx + 1);
+        }
         player_idx += 1;
         tuple_len += 1;
     }
@@ -215,26 +221,47 @@ tuple distribute_units_per_level(int units_per_level_count, int players_count) i
     return units_distribution_per_level;
 }
 
-;; TODO: add player counter
-;; TODO: add per level counter
-() start_round(cell games, int idx) impure {
+int get_players_count(cell players) impure {
+    cell players_counter_cell = udict_get_ref(players, 8, 0);
+    ifnot (players_counter_cell.null?()) {
+        slice s_counter = players_counter_cell.begin_parse();
+        return s_counter.preload_uint(16);
+    }
+    return 0;
+}
+
+cell tuple_to_sell(tuple list, int key_len, int list_len) impure {
+    builder list_cell = begin_cell();
+    while(list_len) {
+        var(list, el) = tuple_pop(list);
+        list_cell.store_uint(key_len, el);
+        list_len -= 1;
+    }
+    return list_cell.end_cell();
+}
+
+cell start_round(cell games, int idx) impure {
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, idx);
+    last_round_results = current_round;
     int players_count = get_players_count(players);
     cell units_counter_by_level = udict_get_ref(unit_pool_by_level, 8, 0);
-    var (units, level, f) = udict_get_min?(units_counter_by_level, 8);
+    var (units, level, f) = udict_get_min?(units_counter_by_level, 16);
     while (f) {
-        int units_per_level_count = units.preload_uint(32);
+        int units_per_level_count = units.preload_uint(16);
         var units_distribution_per_level = distribute_units_per_level(units_per_level_count, players_count);
 
-        ;; add to whole stistics per level
+        current_round = new_dict();
+        cell units_distribution = tuple_to_sell(units_distribution_per_level, 4, units_per_level_count);
+        current_round~udict_set_ref(4, 0, units_distribution);
 
-        (units, level, f) = udict_get_next?(units_counter_by_level, 8, level);
+        (level, units, f) = udict_get_next?(units_counter_by_level, 16, level);
     }
-
+    games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
+    return games;
 }
 
 cell update_players_counter(cell players, int players_counter, int shouldAdd) impure {
-    cell players_counter_cell = udict_get_ref(players, 8, unit_level);
+    cell players_counter_cell = udict_get_ref(players, 8, 0);
     int counter = 0;
     ifnot (players_counter_cell.null?()) {
         slice s_counter = players_counter_cell.begin_parse();
@@ -246,7 +273,7 @@ cell update_players_counter(cell players, int players_counter, int shouldAdd) im
         counter -= players_counter;
     }
     players~udict_set_ref(8, 0, begin_cell().store_uint(counter, 16).end_cell());
-    return units;
+    return players;
 }
 
 cell start_game(cell matches) impure {
@@ -266,7 +293,7 @@ cell start_game(cell matches) impure {
             }
             (unit_pool, level, level_units, f1) = udict_delete_get_min(unit_pool, 4);
         }
-        unit_pool_by_level = update_counters_per_level(unit_pool_by_level, level, 64, true);
+        unit_pool_by_level = update_units_counter(unit_pool_by_level, idx + 1, 0, 64, true); ;; update units counter per level
         players = store_player(players, idx + 1, player_hash, new_dict(), 1, 1, 0, 100);
         (queue, idx, player, f) = udict_delete_get_min_ref(queue, 4);
     }
@@ -278,6 +305,7 @@ cell start_game(cell matches) impure {
     }
     players = update_players_counter(players, 8, true);
     games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), 720000);
+    games = start_round(games, idx);
     matches~udict_set_ref(2, 1, games);
     return matches;
 }
