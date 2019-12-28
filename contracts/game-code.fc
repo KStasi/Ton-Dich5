@@ -372,7 +372,7 @@ cell start_game(cell matches) impure {
         idx = 0;
     }
     players = update_players_counter(players, 8, true);
-    games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), 720000);
+    games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), now() + 7200);
     games = start_round(games, idx);
     matches~udict_set_ref(2, 1, games);
     return matches;
