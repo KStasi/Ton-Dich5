@@ -55,7 +55,7 @@ drop
 test_code
 drop
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
-<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 
 
