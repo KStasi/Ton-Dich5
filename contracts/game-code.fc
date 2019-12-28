@@ -34,10 +34,10 @@ forall X -> tuple single(X x) asm "SINGLE";
         .end_cell());
 }
 
-cell create_user(slice owner_address, cell users, int paid_until, int in_game, int bans_counter, cell units) impure {
+cell create_user(slice owner_address, cell users, int paid_until, int game_idx, int bans_counter, cell units) impure {
     slice user = begin_cell()
         .store_uint(paid_until, 32)
-        .store_int(in_game, 1)
+        .store_uint(game_idx, 8)
         .store_uint(bans_counter, 32)
         .store_dict(units)
         .end_cell()
@@ -52,7 +52,7 @@ cell create_user(slice owner_address, cell users, int paid_until, int in_game, i
     ifnot (f) {
         return (0, 0, 0, new_dict());
     }
-    return (s_user~load_uint(32), s_user~load_int(1), s_user~load_uint(32), s_user.preload_dict());
+    return (s_user~load_uint(32), s_user~load_uint(8), s_user~load_uint(32), s_user.preload_dict());
 
 }
 
@@ -372,13 +372,23 @@ cell start_game(cell matches) impure {
     if(f) {
         idx += 1;
     } else {
-        idx = 0;
+        idx = 1;
     }
     players = update_players_counter(players, 8, true);
     games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), now() + 7200);
     games = start_round(games, idx);
     matches~udict_set_ref(2, 1, games);
     return matches;
+}
+
+int get_next_game_idx(cell matches) method_id {
+    cell games = udict_get_ref(matches, 2, 1);
+    var (last_game, idx, f) = udict_get_max_ref(games, 8);
+    if(f) {
+        return idx + 1;
+    } else {
+        return 1;
+    }
 }
 
 () line_up_to_match(slice owner_address, int valid_until, cell unit_pool, int msg_value) impure {
@@ -404,10 +414,11 @@ cell start_game(cell matches) impure {
     }
     ;; TODO: add level number check
     var (matches, queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
+    int game_idx = get_next_game_idx(matches);
     if (queue_length == 7) {
         matches = start_game(matches);
     }
-    users = create_user(owner_address, users, paid_until, true, bans_counter, units);
+    users = create_user(owner_address, users, paid_until, game_idx, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
@@ -585,6 +596,30 @@ int getqueuelen() method_id {
         return 0;
     }
 }
+
+int getplayeridx(int wc, int addr) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    cell games = udict_get_ref(matches, 2, 1);
+    slice owner_address = begin_cell().store_uint(4, 3).store_int(wc, 8).store_uint(addr, 256).end_cell().begin_parse();
+    (int paid_until, int game_idx, int bans_counter, cell units) = get_user(owner_address, users);
+    var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
+    int owner_hash = slice_hash(owner_address);
+    var idx = 0;
+    var f = 0;
+    while ( ~ f & (idx < 9) ) {
+        idx += 1;
+        cell player = players.udict_get_ref(8, idx);
+        ifnot (player.null?()) {
+            int player_hash = player.begin_parse().preload_uint(256);
+            if (player_hash == owner_hash) {
+                f = 1;
+            }
+        }            
+    }
+    return -1;
+
+} 
 
 ;; Global TODO:
 ;; - add getter for player in round
