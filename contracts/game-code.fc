@@ -162,7 +162,7 @@ cell store_player(cell players, int idx, int player_hash, cell unit_pool, int go
     }
     slice player_slice = player.begin_parse();
     return (
-        player_slice~load_int(256),
+        player_slice~load_uint(256),
         player_slice~load_uint(8),
         player_slice~load_uint(8),
         player_slice~load_uint(8),
@@ -226,6 +226,9 @@ cell get_store(cell current_round) impure {
 
 tuple get_level_store(cell levels_distribution, int level) impure {
     var units_distribution = udict_get_ref(levels_distribution, 4, level);
+    if (units_distribution.null?()) {
+        return nil;
+    }
     dump_stack();
     return cell_to_tuple(units_distribution, 4);
 }
@@ -240,14 +243,15 @@ cell create_position(cell positions, cell locations, int idx) impure {
 
 
 ;; TODO: restrict changes
-;; TODO: store number of players in round
+;; TODO: store number of players participated in round
 ;; TODO: optimize store
 () arrange_units(slice owner_address, int player_idx, int idx, cell locations) impure {
     (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, idx);
     cell positions = udict_get_ref(current_round, 4, 1);
-    throw_if(59, timeout > now());
+    throw_if(59, timeout < now());
+    throw_if(62, locations.null?());
     var store = get_store(current_round);
     var (player_hash, gold, level, exp, hp, unit_pool) = get_player(players, player_idx);
     var (info, unit_idx, f) = udict_get_min?(locations, 4);
@@ -277,7 +281,6 @@ tuple exchange(tuple list, idx_a, int idx_b) impure {
 }
 
 tuple distribute_units_per_level(int units_per_level_count, int players_count) impure {
-    dump_stack();
     int units_per_player_count = units_per_level_count / players_count;
     var units_distribution_per_level = nil;
     int tuple_len = 0;
@@ -661,17 +664,22 @@ cell getlocalstore(int game_idx) method_id {
 
 tuple getlocallevelstore(int game_idx, int level) method_id {
     cell store = getlocalstore(game_idx);
+    if (store.null?()) {
+        return nil;
+    }
     return get_level_store(store, level);
 }
 
 ;; Global TODO:
 ;; - add getter for player in round
 ;; - getter for locations
-;; - getters for local store
 ;; - collect round results
 ;; - end round
 ;; - end game
 
-;; minor TOOD:
+;; minor TODO:
 ;; - add method to complain
 ;; - add method to ban user
+
+;; fixes TODO:
+;; - units location schema 
