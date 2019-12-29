@@ -277,20 +277,21 @@ tuple exchange(tuple list, idx_a, int idx_b) impure {
 }
 
 tuple distribute_units_per_level(int units_per_level_count, int players_count) impure {
+    dump_stack();
     int units_per_player_count = units_per_level_count / players_count;
     var units_distribution_per_level = nil;
     int tuple_len = 0;
     int player_idx = 0; 
     while ((player_idx < players_count) & (tuple_len < units_per_level_count)) {
-        if (player_idx == players_count) {
-            player_idx = 0;
-        }
         ifnot (tuple_len) {
             units_distribution_per_level = single(player_idx + 1);
         } else {
             units_distribution_per_level = tuple_push(units_distribution_per_level, player_idx + 1);
         }
         player_idx += 1;
+        if (player_idx == players_count) {
+            player_idx = 0;
+        }
         tuple_len += 1;
     }
     ;; shuffle
