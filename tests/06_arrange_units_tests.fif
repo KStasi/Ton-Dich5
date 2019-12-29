@@ -6,6 +6,8 @@
 100842 constant getunits
 116502 constant getgame
 79730 constant getplayeridx
+107203 constant getlocalstore
+106679 constant getlocallevelstore
 
 { = test_ret_value } : test
 // test # 0 get local idx
@@ -31,6 +33,15 @@ drop
 -1 test
 
 // test # 1 get local store
+1 getlocalstore code updated_storage @ c7 runvmctx 
+test_code
+drop  
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 
+// test # 2 get local level store
+1 5 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop .s
+// <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 // test # 2 arrange units
 // test # 3 get locations
