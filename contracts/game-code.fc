@@ -686,6 +686,3 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
 ;; minor TODO:
 ;; - add method to complain
 ;; - add method to ban user
-
-;; fixes TODO:
-;; - units location schema 

@@ -12,6 +12,7 @@
 
 variable player_idx
 variable game_idx
+variable locations_per_level
 variable locations
 
 { = test_ret_value } : test
@@ -71,12 +72,16 @@ tuple? 0= test_ret_value
 
 // test # 3 arrange units
 
-{ <b swap 4 u, swap 16 u, swap 16 u, b> <s } : create-location
+{ <b swap 16 u, swap 16 u, b> <s } : create-location-per-level
+{ locations_per_level @ 16 udict!+ not abort"cannot add location to dictionary" locations_per_level ! } : add-location-per-level
+{ <b locations_per_level @ dict, b> <s } : create-location
 { locations @ 4 udict!+ not abort"cannot add location to dictionary" locations ! } : add-location
 
 dictnew locations !
-10 10 1 create-location
-2 add-location
+dictnew locations_per_level !
+10 10 create-location-per-level
+2 add-location-per-level
+create-location 1 add-location
 
 1 player_idx !
 1 game_idx !
@@ -86,9 +91,12 @@ dictnew locations !
 1 idx !
 send-request
 
+
 dictnew locations !
-10 15 2 create-location
-6 add-location
+dictnew locations_per_level !
+10 15 create-location-per-level
+6 add-location-per-level
+create-location 2 add-location
 
 2 player_idx !
 1 game_idx !
@@ -99,8 +107,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-10 15 2 create-location
-0 add-location
+dictnew locations_per_level !
+10 15 create-location-per-level
+0 add-location-per-level
+create-location 2 add-location
 
 3 player_idx !
 1 game_idx !
@@ -111,8 +121,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-1 5 2 create-location
-7 add-location
+dictnew locations_per_level !
+1 5 create-location-per-level
+7 add-location-per-level
+create-location 2 add-location
 
 4 player_idx !
 1 game_idx !
@@ -123,8 +135,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-1 5 4 create-location
-2 add-location
+dictnew locations_per_level !
+11 5 create-location-per-level
+2 add-location-per-level
+create-location 4 add-location
 
 5 player_idx !
 1 game_idx !
@@ -135,8 +149,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-11 5 4 create-location
-3 add-location
+dictnew locations_per_level !
+7 88 create-location-per-level
+3 add-location-per-level
+create-location 4 add-location
 
 6 player_idx !
 1 game_idx !
@@ -147,8 +163,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-7 6 4 create-location
-4 add-location
+dictnew locations_per_level !
+7 6 create-location-per-level
+4 add-location-per-level
+create-location 4 add-location
 
 7 player_idx !
 1 game_idx !
@@ -159,8 +177,10 @@ dictnew locations !
 send-request
 
 dictnew locations !
-1 5 1 create-location
-1 add-location
+dictnew locations_per_level !
+7 6 create-location-per-level
+1 add-location-per-level
+create-location 1 add-location
 
 8 player_idx !
 1 game_idx !
