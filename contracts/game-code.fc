@@ -253,21 +253,27 @@ cell create_position(cell positions, cell locations, int idx) impure {
     throw_if(59, timeout < now());
     throw_if(62, locations.null?());
     var store = get_store(current_round);
-    var (player_hash, gold, level, exp, hp, unit_pool) = get_player(players, player_idx);
-    var (info, unit_idx, f) = udict_get_min?(locations, 4);
-    while (f) {
-        int level = info.preload_uint(4);
+    var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
+    var (level_info, level, f1) = udict_get_min?(locations, 4);
+    while (f1) {
+        cell level_distribution = level_info.preload_dict();
         var level_store = get_level_store(store, level);
-        ;; var (x, y) = (coordinats~load_int(16), coordinats~load_int(16));
-        int buyer_idx = tuple_get_index(level_store, unit_idx);
-        throw_unless(60, buyer_idx == player_idx); ;; purchase not allowed
-        gold -= 1;
-        throw_if(61, gold < 0); ;; not enoght money
-        (unit_idx, info, f) = udict_get_next?(locations, 4, unit_idx);
+        var (coordinats, unit_idx, f2) = udict_get_min?(level_distribution, 16);
+        while (f2) {
+            ;; var (x, y) = (coordinats~load_int(16), coordinats~load_int(16));
+            dump_stack();
+            int buyer_idx = tuple_get_index(level_store, unit_idx);
+            throw_unless(60, buyer_idx == player_idx); ;; purchase not allowed
+            gold -= 1;
+            throw_if(61, gold < 0); ;; not enoght money
+            (unit_idx, coordinats, f2) = udict_get_next?(level_distribution, 16, unit_idx);
+        }
+        
+        (level, level_info, f1) = udict_get_next?(locations, 4, level);
     }
     positions = create_position(positions, locations, player_idx);
     current_round~udict_set_ref(4, 1, positions);
-    players = store_player(players, player_idx, player_hash, unit_pool, gold, level, exp, hp);
+    players = store_player(players, player_idx, player_hash, unit_pool, gold, user_level, exp, hp);
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
