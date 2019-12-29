@@ -174,7 +174,7 @@ cell create_game(cell games, int idx, int valid_unitl, int should_start_round, c
     cell game = begin_cell()
         .store_uint(valid_unitl, 32)
         .store_int(should_start_round, 1)
-        .store_uint(timeout, 32) ;; TODO: should update
+        .store_uint(timeout, 32)
         .store_dict(unit_pool_by_level)
         .store_dict(players)
         .store_dict(current_round)
@@ -204,7 +204,6 @@ cell create_game(cell games, int idx, int valid_unitl, int should_start_round, c
 
 tuple cell_to_tuple(cell list_cell, int key_len ) impure {
     slice list_slice = list_cell.begin_parse();
-    dump_stack();
     var list = nil;
     int tuple_len = 0;
     while(list_slice.slice_bits()) {
@@ -229,7 +228,6 @@ tuple get_level_store(cell levels_distribution, int level) impure {
     if (units_distribution.null?()) {
         return nil;
     }
-    dump_stack();
     return cell_to_tuple(units_distribution, 4);
 }
 
@@ -241,9 +239,31 @@ cell create_position(cell positions, cell locations, int idx) impure {
     return positions;
 }
 
+cell update_players_counter(cell players, int players_counter, int key_len, int idx, int shouldAdd) impure {
+    cell players_counter_cell = udict_get_ref(players, key_len, idx);
+    int counter = 0;
+    ifnot (players_counter_cell.null?()) {
+        slice s_counter = players_counter_cell.begin_parse();
+        counter = s_counter.preload_uint(16);
+    }
+    if (shouldAdd) {
+        counter += players_counter;
+    } else {
+        counter -= players_counter;
+    }
+    players~udict_set_ref(key_len, idx, begin_cell().store_uint(counter, 16).end_cell());
+    return players;
+}
 
+int get_players_count(cell players) impure {
+    cell players_counter_cell = udict_get_ref(players, 8, 0);
+    ifnot (players_counter_cell.null?()) {
+        slice s_counter = players_counter_cell.begin_parse();
+        return s_counter.preload_uint(16);
+    }
+    return 0;
+}
 ;; TODO: restrict changes
-;; TODO: store number of players participated in round
 ;; TODO: optimize store
 () arrange_units(slice owner_address, int player_idx, int idx, cell locations) impure {
     (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
@@ -261,7 +281,6 @@ cell create_position(cell positions, cell locations, int idx) impure {
         var (coordinats, unit_idx, f2) = udict_get_min?(level_distribution, 16);
         while (f2) {
             ;; var (x, y) = (coordinats~load_int(16), coordinats~load_int(16));
-            dump_stack();
             int buyer_idx = tuple_get_index(level_store, unit_idx);
             throw_unless(60, buyer_idx == player_idx); ;; purchase not allowed
             gold -= 1;
@@ -273,8 +292,10 @@ cell create_position(cell positions, cell locations, int idx) impure {
     }
     positions = create_position(positions, locations, player_idx);
     current_round~udict_set_ref(4, 1, positions);
+    current_round = update_players_counter(current_round, 1, 4, 2, true);
+    int players_in_game = udict_get_ref(current_round, 4, 2).begin_parse().preload_uint(16);
     players = store_player(players, player_idx, player_hash, unit_pool, gold, user_level, exp, hp);
-    games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
+    games = create_game(games, idx, valid_unitl, players_in_game < get_players_count(players), unit_pool_by_level, players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
@@ -312,22 +333,11 @@ tuple distribute_units_per_level(int units_per_level_count, int players_count) i
     return units_distribution_per_level;
 }
 
-int get_players_count(cell players) impure {
-    cell players_counter_cell = udict_get_ref(players, 8, 0);
-    ifnot (players_counter_cell.null?()) {
-        slice s_counter = players_counter_cell.begin_parse();
-        return s_counter.preload_uint(16);
-    }
-    return 0;
-}
-
 cell tuple_to_cell(tuple list, int key_len, int list_len) impure {
     builder list_cell = begin_cell();
     int el = 0;
     while(list_len) {
-        dump_stack();
         (list, el) = tuple_pop(list);
-        dump_stack();
         list_cell~store_uint(el, key_len);
         list_len -= 1;
     }
@@ -359,22 +369,6 @@ cell start_round(cell games, int idx) impure {
     return games;
 }
 
-cell update_players_counter(cell players, int players_counter, int shouldAdd) impure {
-    cell players_counter_cell = udict_get_ref(players, 8, 0);
-    int counter = 0;
-    ifnot (players_counter_cell.null?()) {
-        slice s_counter = players_counter_cell.begin_parse();
-        counter = s_counter.preload_uint(16);
-    }
-    if (shouldAdd) {
-        counter += players_counter;
-    } else {
-        counter -= players_counter;
-    }
-    players~udict_set_ref(8, 0, begin_cell().store_uint(counter, 16).end_cell());
-    return players;
-}
-
 cell start_game(cell matches) impure {
     var (matches, idx, queue, f) = udict_delete_get_min_ref(matches, 2);
     cell games = udict_get_ref(matches, 2, 1);
@@ -402,7 +396,7 @@ cell start_game(cell matches) impure {
     } else {
         idx = 1;
     }
-    players = update_players_counter(players, 8, true);
+    players = update_players_counter(players, 8, 8, 0, true);
     games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), now() + 7200);
     games = start_round(games, idx);
     matches~udict_set_ref(2, 1, games);
@@ -678,7 +672,6 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
 
 ;; Global TODO:
 ;; - add getter for player in round
-;; - getter for locations
 ;; - collect round results
 ;; - end round
 ;; - end game
