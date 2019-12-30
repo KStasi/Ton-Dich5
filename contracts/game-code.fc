@@ -473,6 +473,12 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     return new_players_state;
 }
 
+(cell, cell, cell) end_game(cell players, cell unit_pool_by_level, cell users, cell current_round, int player_idx, cell positions) impure {
+    ;; update unit_pool_by_level, 
+    ;; update users
+    return (unit_pool_by_level, users, current_round);
+}
+
 () end_round(int game_idx) impure {
     var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
@@ -509,12 +515,14 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     var (board_info, board_idx, f1) = udict_get_min?(board, 4);
     var (new_players_state_info, player_idx, f1) = udict_get_min?(new_players_state, 4);
     cell new_players = new_dict();
+    cell positions = udict_get_ref(current_round, 4, 1);
     while (f1) {
         board = update_board(board, counter, counter, counter, 4, board_idx, true);
         var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
         var (gold, user_level, exp, hp) = (new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter);
         if (hp) {
             new_players = store_player(new_players, player_idx, player_hash, unit_pool, gold, user_level, exp, hp);
+            new_players = update_players_counter(new_players, 1, 8, 0, true);
         } else {
             ;; end_game();
         }
@@ -813,6 +821,7 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
 ;; - add getter for results
 ;; - end round
 ;; - end game
+;; - update units level layout
 
 ;; minor TODO:
 ;; - add method to complain
