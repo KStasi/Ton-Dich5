@@ -429,12 +429,11 @@ cell store_result(cell current_round, slice new_dict, int idx, int player_idx) i
 }
 
 cell update_board(cell boards, int new_result, int new_units_count, int new_stars, int key_len, int idx, int shouldAdd) impure {
-    cell board_cell = udict_get_ref(boards, key_len, idx);
+    var (board_info, f) = udict_get?(boards, key_len, idx);
     int result = 0;
     int units_count = 0;
     int stars = 0;
-    ifnot (board_cell.null?()) {
-        slice board_info = board_cell.begin_parse();
+    if (f) {
         (result, units_count, stars) = (board_info~load_int(4), board_info~load_int(16), board_info~load_int(16));
     }
     if (shouldAdd) {
@@ -451,13 +450,12 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
 }
 
 cell update_players_state_counter(cell new_players_state, int new_gold, int new_level, int new_exp, int new_hp, int key_len, int idx, int shouldAdd) impure {
-    cell state_cell = udict_get_ref(new_players_state, key_len, idx);
+    var (new_players_state_info, f) = udict_get?(new_players_state, key_len, idx);
     int gold = 0;
     int level = 0;
     int exp = 0;
     int hp = 0;
-    ifnot (state_cell.null?()) {
-        slice new_players_state_info = state_cell.begin_parse();
+    if (f) {
         (gold, level, exp, hp) = (new_players_state_info~load_uint(8), new_players_state_info~load_uint(8), new_players_state_info~load_uint(8), new_players_state_info~load_uint(8));
     }
     if (shouldAdd) {
@@ -508,13 +506,23 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
         boards_info = boards_info_slice.preload_dict();
         new_players_states_info = new_players_states_info_slice.preload_dict();
     }
-    ;; for each player 
+    var (board_info, board_idx, f1) = udict_get_min?(board, 4);
+    var (new_players_state_info, player_idx, f1) = udict_get_min?(new_players_state, 4);
+    cell new_players = new_dict();
+    while (f1) {
         board = update_board(board, counter, counter, counter, 4, board_idx, true);
-        new_players_state = update_players_state_counter(new_players_state, counter, counter, counter, counter, 4, player_idx, true);    ;; replace boards
-        ;; replace players states
-        ;; 
-    ;;
-    games = create_game(games, game_idx, valid_unitl, true, unit_pool_by_level, players, current_round, last_round_results, timeout);
+        var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
+        var (gold, user_level, exp, hp) = (new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter, new_players_state_info~load_uint(8) / counter);
+        if (hp) {
+            new_players = store_player(new_players, player_idx, player_hash, unit_pool, gold, user_level, exp, hp);
+        } else {
+            ;; end_game();
+        }
+        (board_idx, board_info, f1) = udict_get_next?(board, 4, board_idx);
+        (player_idx, new_players_state_info, f1) = udict_get_next?(new_players_state, 4, player_idx);
+    }
+    current_round~udict_set_ref(4, 3, board);
+    games = create_game(games, game_idx, valid_unitl, true, unit_pool_by_level, new_players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 
