@@ -3,6 +3,7 @@
 (cell, (int, cell, int)) ~udict::delete_get_min_ref(cell dict, int key_len) asm(-> 0 2 1 3) "DICTUREMMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (cell, int, cell, int) udict_delete_get_min_ref(cell dict, int key_len) asm(-> 0 2 1 3) "DICTUREMMINREF" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 (slice, int, int) udict_get_min?(cell dict, int key_len) asm "DICTUMIN" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
+(slice, int, int) udict_get_max?(cell dict, int key_len) asm "DICTUMAX" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
 
 forall X -> tuple tuple_push(tuple list, X x) asm "TPUSH";
 forall X -> (tuple, X) tuple_pop(tuple list) asm "TPOP";
@@ -77,7 +78,6 @@ int get_price(cell prices, int unit_id, int unit_level) method_id {
     }
     return s_price.preload_uint(32);
 }
-
 int get_unit(cell units, int unit_id, int unit_level) method_id {
     cell units_by_level = udict_get_ref(units, 8, unit_level);
     (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
@@ -88,6 +88,7 @@ int get_unit(cell units, int unit_id, int unit_level) method_id {
     return counter;
 }
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 cell update_units_counter(cell units, int unit_id, int unit_level, int units_counter, int shouldAdd) impure {
     cell units_by_level = udict_get_ref(units, 8, unit_level);
     (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
@@ -107,6 +108,21 @@ cell update_units_counter(cell units, int unit_id, int unit_level, int units_cou
     return units;
 }
 
+cell update_units_list(cell units, int unit_id, int unit_level, int counter) impure {
+    cell units_by_level = udict_get_ref(units, 8, unit_level);
+    var(unit_type, idx, f) = udict_get_max?(units_by_level, 16);
+    ifnot (f) {
+        idx = 0;
+    }
+    while (counter) {
+        units_by_level~udict_set(16, idx + 1, begin_cell().store_uint(unit_id, 16).end_cell().begin_parse());
+        counter -= 1;
+    }
+    units~udict_set_ref(8, unit_level, units_by_level);
+    return units;
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 () buy_unit(slice owner_address, int unit_id, int unit_level, int units_counter, int msg_value) impure {
     (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
     int price = get_price(prices, unit_id, unit_level);
@@ -377,7 +393,7 @@ cell start_round(cell games, int idx) impure {
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
     return games;
 }
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 cell start_game(cell matches) impure {
     var (matches, idx, queue, f) = udict_delete_get_min_ref(matches, 2);
     cell games = udict_get_ref(matches, 2, 1);
@@ -391,7 +407,7 @@ cell start_game(cell matches) impure {
         while (f1) {
             while (level_units.slice_bits()) {
                 (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
-                unit_pool_by_level = update_units_counter(unit_pool_by_level, unit_id, level, counter, true);
+                unit_pool_by_level = update_units_list(unit_pool_by_level, unit_id, level, counter);
             }
             (unit_pool, level, level_units, f1) = udict_delete_get_min(unit_pool, 4);
         }
@@ -411,7 +427,7 @@ cell start_game(cell matches) impure {
     matches~udict_set_ref(2, 1, games);
     return matches;
 }
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 int get_next_game_idx(cell matches) method_id {
     cell games = udict_get_ref(matches, 2, 1);
     var (last_game, idx, f) = udict_get_max_ref(games, 8);
@@ -559,6 +575,7 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 () line_up_to_match(slice owner_address, int valid_until, cell unit_pool, int msg_value) impure {
     ;; unit pool is [(counter) (type)](8)
     throw_if(54, msg_value < 1000); ;; fee
@@ -589,6 +606,7 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     users = create_user(owner_address, users, paid_until, game_idx, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 () recv_external(slice in_msg) impure {
     slice signature = in_msg~load_bits(512);
