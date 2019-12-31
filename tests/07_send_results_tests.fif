@@ -1,5 +1,6 @@
 #!/usr/bin/env fift -s
 "./06_arrange_units_tests.fif" include
+114624 constant gettemproundresults
 
 variable boards
 variable new_players_state
@@ -72,10 +73,54 @@ dictnew new_players_state !
 1 idx !
 send-request
 // test # 1 get result
-
+1 gettemproundresults code updated_storage @ c7 runvmctx 
+test_code 
+drop
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 
 // test # 2 send all results
+2 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+2 idx !
+send-request
 
+3 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+3 idx !
+send-request
+
+4 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+4 idx !
+send-request
+
+5 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+5 idx !
+send-request
+
+6 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+6 idx !
+send-request
+
+7 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+7 idx !
+send-request
+
+8 player_idx !
+<b 0xddeeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, boards @ dict, new_players_state @ dict, b> 
+<s int_msg_body !  
+8 idx !
+send-request
 // test # 3 check round results
 
 // test # 4 check players count
