@@ -577,7 +577,7 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
 }
 
 () send_round_results(slice owner_address, int player_idx, int game_idx, slice boards, slice new_players_state) impure {
-    ;; cell board is udict(4); 0 => int4 result , 1 => int units_count , 2 => stars count
+    ;; cell board is udict(4); 0 => int4 result , int units_count , int stars count
     ;; cell new_players_state is udict(8); each is int gold, int level, int exp, int hp 
     var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
