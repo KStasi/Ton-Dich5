@@ -29,7 +29,7 @@ Owner has the right to ban users.
 
 ## Project Stages
 
-NOTE: only part of the solution is implemented now.
+NOTE: only part of the solution is present in the master branch. Ther is full version in `with_random` branch. It is too expensive to be deployed and used. So it is optimizing now.
 
 ## How to use
 
