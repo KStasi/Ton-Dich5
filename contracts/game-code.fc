@@ -591,12 +591,15 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     int players_in_game = udict_get_ref(current_round, 4, 2).begin_parse().preload_uint(16);
     if (players_in_game == players_count) {
         timeout = now() + 7200;
-        current_round = update_players_counter(current_round, players_in_game, 4, 2, false);
     }
-    current_round = update_players_counter(current_round, 1, 4, 2, true);
-    games = create_game(games, game_idx, valid_unitl, players_in_game == players_count, unit_pool_by_level, players, current_round, last_round_results, timeout);
+    current_round = update_players_counter(current_round, 1, 4, 2, false);
+    games = create_game(games, game_idx, valid_unitl, players_in_game == 1, unit_pool_by_level, players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
-    return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
+    store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
+    if (players_in_game == 1) {
+        return end_round(game_idx);
+    }
+    return ();
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -681,8 +684,12 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     return line_up_to_match(s_addr, valid_until, unit_pool, msg_value);
   }
   if (op == 0xcceeee) {
-    (int player_idx, int idx, cell locations) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_dict());
-    return arrange_units(s_addr, player_idx, idx, locations);
+    (int player_idx, int game_idx, cell locations) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_dict());
+    return arrange_units(s_addr, player_idx, game_idx, locations);
+  }
+  if (op == 0xddeeee) {
+    (int player_idx, int game_idx, cell boards, cell new_players_state) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_dict(), in_msg~load_dict());
+    return send_round_results(s_addr, player_idx, game_idx, begin_cell().store_dict(boards).end_cell().begin_parse(), begin_cell().store_dict(new_players_state).end_cell().begin_parse());
   }
   return ();
 }
@@ -861,8 +868,6 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
 ;; Global TODO:
 ;; - add getter for player in round
 ;; - add getter for results
-;; - end round
-;; - end game
 
 ;; minor TODO:
 ;; - add method to complain
