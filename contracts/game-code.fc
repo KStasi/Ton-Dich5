@@ -119,6 +119,7 @@ cell update_units_list(cell units, int unit_id, int unit_level, int counter) imp
         units_by_level~udict_set(16, idx, begin_cell().store_uint(unit_id, 16).end_cell().begin_parse());
         counter -= 1;
     }
+    throw_if(99, units_by_level.null?());
     units~udict_set_ref(8, unit_level, units_by_level);
     return units;
 }
@@ -390,6 +391,7 @@ cell start_round(cell games, int idx) impure {
         var units_distribution_per_level = distribute_units_per_level(units_per_level_count, players_count);
         current_round = store_distribution_per_level(current_round, units_distribution_per_level, units_per_level_count, level);
         (level, units, f) = udict_get_next?(units_counter_by_level, 16, level);
+        dump_stack();
     }
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
     return games;
@@ -425,6 +427,7 @@ cell start_game(cell matches) impure {
     players = update_players_counter(players, 8, 8, 0, true);
     games = create_game(games, idx, now() + 40000, true, unit_pool_by_level, players, new_dict(), new_dict(), now() + 7200);
     games = start_round(games, idx);
+    ;; dump_stack();
     matches~udict_set_ref(2, 1, games);
     return matches;
 }
@@ -503,6 +506,9 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
         int level_counter = 0;
         var (coordinats, unit_idx_in_tuple, f2) = udict_get_min?(level_distribution, 16);
         cell units_by_level = udict_get_ref(unit_pool_by_level, 8, level);
+        ;; throw_unless(98, level == 2);
+        ;; throw_if(99, units_by_level.null?());
+        ;; dump_stack();
         while (f2) {
             (slice s_unit_idx, int f) = units_by_level~udict_delete_get?(16, unit_idx_in_tuple);
             ;; can't find id ?????????????????????????????????????????????????????????
@@ -614,6 +620,7 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
     var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
     var (paid_until, in_game, bans_counter, units) = get_user(slice_hash(owner_address), users);
     throw_if(57, in_game); ;; only one match is allowed simultaneously
+    var (matches, queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
     var (unit_pool, level,  level_units, f) = udict_delete_get_min(unit_pool, 4);
     int level_counter = 0;
     while (f) {
@@ -628,7 +635,6 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
         level_counter = 0;
     }
     ;; TODO: add level number check
-    var (matches, queue_length) = push_queue(matches, owner_address, valid_until, unit_pool);
     int game_idx = get_next_game_idx(matches);
     if (queue_length == 7) {
         matches = start_game(matches);
