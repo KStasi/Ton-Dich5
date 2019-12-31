@@ -506,13 +506,9 @@ cell update_players_state_counter(cell new_players_state, int new_gold, int new_
         int level_counter = 0;
         var (coordinats, unit_idx_in_tuple, f2) = udict_get_min?(level_distribution, 16);
         cell units_by_level = udict_get_ref(unit_pool_by_level, 8, level);
-        ;; throw_unless(98, level == 2);
-        ;; throw_if(99, units_by_level.null?());
-        ;; dump_stack();
+
         while (f2) {
             (slice s_unit_idx, int f) = units_by_level~udict_delete_get?(16, unit_idx_in_tuple);
-            ;; can't find id ?????????????????????????????????????????????????????????
-            dump_stack();
             int unit_idx = s_unit_idx.preload_uint(16);
             units = update_units_counter(units, unit_idx, level, 1, true);
             level_counter += 1;
@@ -882,6 +878,26 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
     return (udict_get_ref(current_round, 4, 3), udict_get_ref(current_round, 4, 4));
 }
 
+int getplayerscount(int game_idx) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    cell games = udict_get_ref(matches, 2, 1);
+    var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
+    return get_players_count(players);
+}
+
+int getunitscount(int game_idx, int level) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    cell games = udict_get_ref(matches, 2, 1);
+    var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
+    cell units_counter_by_level = udict_get_ref(unit_pool_by_level, 8, 0);
+    (slice s_counter, int f) = units_counter_by_level.udict_get?(16, level);
+    if (f) {
+        return s_counter.preload_uint(16);
+    }    
+    return 0;
+}
 ;; Global TODO:
 ;; - add getter for player in round
 ;; - add getter for results

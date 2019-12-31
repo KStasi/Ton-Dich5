@@ -1,6 +1,8 @@
 #!/usr/bin/env fift -s
 "./06_arrange_units_tests.fif" include
 114624 constant gettemproundresults
+113176 constant getplayerscount
+80145 constant getunitscount
 
 variable boards
 variable new_players_state
@@ -125,8 +127,23 @@ send-request
 
 // test # 4 check players count
 
+1 getplayerscount code updated_storage @ c7 runvmctx 
+test_code 
+drop
+7 = test_ret_value
+
 // test # 5 check units count
 
-// test # 6 check players units 
+1 2 getunitscount code updated_storage @ c7 runvmctx 
+test_code 
+drop .s
+63 = test_ret_value
+
+// test # 6 check player units after end 
+
+-1 <b 4 32 u, b> hashu 2 2 getunits code updated_storage @ c7 runvmctx
+test_code
+drop .s
+1 = test_ret_value
 
 // test # 7 try start new round
