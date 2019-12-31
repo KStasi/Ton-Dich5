@@ -125,6 +125,12 @@ send-request
 send-request
 // test # 3 check round results
 
+1 gettemproundresults code updated_storage @ c7 runvmctx 
+test_code 
+drop
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
+
 // test # 4 check players count
 
 1 getplayerscount code updated_storage @ c7 runvmctx 
@@ -143,7 +149,7 @@ drop .s
 
 -1 <b 4 32 u, b> hashu 2 2 getunits code updated_storage @ c7 runvmctx
 test_code
-drop .s
+drop
 1 = test_ret_value
 
 // test # 7 try start new round
