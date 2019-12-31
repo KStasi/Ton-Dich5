@@ -1,0 +1,23 @@
+#!/usr/bin/env fift -s
+"./06_arrange_units_tests.fif" include
+
+variable player_idx
+variable game_idx
+variable locations_per_level
+variable locations
+
+// test # 0 send one result
+
+// test # 1 get result
+
+// test # 2 send all results
+
+// test # 3 check round results
+
+// test # 4 check players count
+
+// test # 5 check units count
+
+// test # 6 check players units 
+
+// test # 7 try start new round
