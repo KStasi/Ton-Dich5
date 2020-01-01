@@ -47,8 +47,7 @@ cell create_user(int owner_hash, cell users, int paid_until, int game_idx, int b
 }
 
 (int, int, int, cell) get_user(int owner_hash, cell users) method_id {
-    ;; int paid_until, int in_game, int bans_counter, cell units
-    (slice s_user, int f) = users.udict_get?(256, owner_hash);
+    var ( s_user, f) = users.udict_get?(256, owner_hash);
     ifnot (f) {
         return (0, 0, 0, new_dict());
     }
@@ -62,8 +61,7 @@ cell create_user(int owner_hash, cell users, int paid_until, int game_idx, int b
 }
 
 int get_price(cell prices, int unit_id, int unit_level) method_id {
-    ;;cell unit = udict_get_ref(prices, 16, unit_id);
-    (slice s_unit, int f) = prices.udict_get?(16, unit_id);
+    var ( s_unit, f) = prices.udict_get?(16, unit_id);
     ifnot (f) {
         return -1;
     }
@@ -72,13 +70,13 @@ int get_price(cell prices, int unit_id, int unit_level) method_id {
         return 0; 
     }
 
-    (slice s_price, int f) = unit.udict_get?(8, unit_level);
+    var (s_price, f) = unit.udict_get?(8, unit_level);
     ifnot (f) {
         return -1;
     }
     return s_price.preload_uint(32);
 }
-int get_unit(cell units, int unit_id, int unit_level) method_id {
+int get_unit_counter(cell units, int unit_id, int unit_level) method_id {
     cell units_by_level = udict_get_ref(units, 8, unit_level);
     (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
     int counter = 0;
@@ -88,7 +86,6 @@ int get_unit(cell units, int unit_id, int unit_level) method_id {
     return counter;
 }
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 cell update_units_counter(cell units, int unit_id, int unit_level, int units_counter, int shouldAdd) impure {
     cell units_by_level = udict_get_ref(units, 8, unit_level);
     (slice s_counter, int f) = units_by_level.udict_get?(16, unit_id);
@@ -119,20 +116,18 @@ cell update_units_list(cell units, int unit_id, int unit_level, int counter) imp
         units_by_level~udict_set(16, idx, begin_cell().store_uint(unit_id, 16).end_cell().begin_parse());
         counter -= 1;
     }
-    throw_if(99, units_by_level.null?());
-    units~udict_set_ref(8, unit_level, units_by_level);
-    return units;
+    return units.udict_set_ref(8, unit_level, units_by_level);
 }
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 () buy_unit(slice owner_address, int unit_id, int unit_level, int units_counter, int msg_value) impure {
-    (cell users, cell matches, cell prices, cell ban_requests, int stored_seqno, int public_key) = load_data();
+    var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
     int price = get_price(prices, unit_id, unit_level);
     throw_if(50, price == -1); ;; unit can't be sold
     throw_if(51, price * units_counter > msg_value); ;; unsufficient funds
-    (int paid_until, int in_game, int bans_counter, cell units) = get_user(slice_hash(owner_address), users);
+    int owner_hash = slice_hash(owner_address);
+    var (paid_until, in_game, bans_counter, units) = get_user(owner_hash, users);
     units = update_units_counter(units, unit_id, unit_level, units_counter, true);
-    users = create_user(slice_hash(owner_address), users, now() + 100000, in_game, bans_counter, units);
+    users = create_user(owner_hash, users, now() + 100000, in_game, bans_counter, units);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
 
@@ -796,7 +791,7 @@ int getprice(int unit_id, int unit_level) method_id {
 
 (int) getunits(int wc, int addr, int unit_id, int unit_level) method_id {
     (int paid_until, int in_game, int bans_counter, cell units) = getuser(wc, addr);
-    return get_unit(units, unit_id, unit_level);
+    return get_unit_counter(units, unit_id, unit_level);
 }
 
 (int, int, int, cell, cell, cell,cell) getgame(int idx) method_id {
@@ -900,7 +895,8 @@ int getunitscount(int game_idx, int level) method_id {
 }
 ;; Global TODO:
 ;; - add getter for player in round
-;; - add getter for results
+;; - use dict instead of tuple
+;; - get rid off level in players state
 
 ;; minor TODO:
 ;; - add method to complain

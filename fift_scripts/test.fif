@@ -4,4 +4,4 @@
 file-base +".addr" load-address 2constant game_addr
 
 
-<b game_addr  addr, bbits .s drop b>
+<b game_addr  addr, bbits drop b>
