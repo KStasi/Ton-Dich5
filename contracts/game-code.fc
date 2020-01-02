@@ -370,8 +370,8 @@ cell store_result(cell current_round, slice new_dict, int idx, int player_idx) i
     return current_round;
 }
 
-cell update_board(cell boards, int new_result, int new_units_count, int new_stars, int key_len, int idx, int shouldAdd) impure {
-    var (board_info, f) = udict_get?(boards, key_len, idx);
+cell update_board(cell boards, int new_result, int new_units_count, int new_stars, int idx, int shouldAdd) impure {
+    var (board_info, f) = udict_get?(boards, 4, idx);
     int result = 0;
     int units_count = 0;
     int stars = 0;
@@ -384,10 +384,10 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
         stars += new_stars;
     } else {
         result /= new_result;
-        units_count /= new_units_count;
-        stars /= new_stars;
+        units_count /= new_result;
+        stars /= new_result;
     }
-    boards~udict_set(key_len, idx, begin_cell().store_uint(result, 8).store_uint(units_count, 32).store_uint(stars, 32).end_cell().begin_parse());
+    boards~udict_set(4, idx, begin_cell().store_uint(result, 8).store_uint(units_count, 32).store_uint(stars, 32).end_cell().begin_parse());
     return boards;
 }
 
@@ -431,16 +431,15 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
 
     ;; results are adjusted here
     var (boards_info_slice, author_idx, f1) = udict_get_min?(boards, 4);
-    cell boards_info = boards_info_slice.preload_dict();
     var (new_players_states_info_slice, author_idx, f1) = udict_get_min?(new_players_states, 4);
-    cell new_players_states_info = new_players_states_info_slice.preload_dict();
     while (f1) {
-        counter += 1;
+        cell boards_info = boards_info_slice.preload_dict();
+        cell new_players_states_info = new_players_states_info_slice.preload_dict();
         var (board_info, board_idx, f2) = udict_get_min?(boards_info, 4);
         var (new_players_state_info, player_idx, f2) = udict_get_min?(new_players_states_info, 4);
         while (f2) {
             var (result, units_count, stars) = (board_info~load_uint(4), board_info~load_uint(16), board_info.preload_uint(16));
-            board = update_board(board, result, units_count, stars, 4, board_idx, true);
+            board = update_board(board, result, units_count, stars, board_idx, true);
             var (gold, level, exp, hp) = (new_players_state_info~load_uint(8), new_players_state_info~load_uint(8), new_players_state_info~load_uint(8), new_players_state_info.preload_uint(8));
             
             (new_players_state_info, int f) = udict_get?(new_players_state, 4, player_idx);
@@ -458,17 +457,13 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
         }
         (author_idx, boards_info_slice, f1) = udict_get_next?(boards, 4, author_idx);
         (author_idx, new_players_states_info_slice, f1) = udict_get_next?(new_players_states, 4, author_idx);
-        if (f1) {
-            boards_info = boards_info_slice.preload_dict();
-            new_players_states_info = new_players_states_info_slice.preload_dict();
-        }
+        counter += 1;
     }
-    var (board_info, board_idx, f1) = udict_get_min?(board, 4);
     var (new_players_state_info, player_idx, f1) = udict_get_min?(new_players_state, 4);
     cell new_players = new_dict();
     cell positions = udict_get_ref(current_round, 4, 1);
     while (f1) {
-        board = update_board(board, counter, counter, counter, 4, board_idx, false);
+        board = update_board(board, counter, counter, counter, player_idx, false);
         var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
         var (gold, user_level, exp, hp) = (new_players_state_info~load_uint(16) / counter, new_players_state_info~load_uint(16) / counter, new_players_state_info~load_uint(16) / counter, new_players_state_info.preload_uint(16) / counter);
         if (hp) {
@@ -477,7 +472,6 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
         } else {
             (unit_pool_by_level, users) = end_game(players, unit_pool_by_level, users, player_idx, positions);
         }
-        (board_idx, board_info, f1) = udict_get_next?(board, 4, board_idx);
         (player_idx, new_players_state_info, f1) = udict_get_next?(new_players_state, 4, player_idx);
     }
     current_round~udict_set_ref(4, 3, board);
