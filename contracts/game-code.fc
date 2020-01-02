@@ -208,17 +208,18 @@ cell create_game(cell games, int idx, int valid_unitl, int should_start_round, c
 }
 
 tuple cell_to_tuple(cell list_cell, int key_len ) impure {
-    slice list_slice = list_cell.begin_parse();
     var list = nil;
     int tuple_len = 0;
-    while(list_slice.slice_bits()) {
-        int el = list_slice~load_uint(key_len);
+    var el_slice = list_cell.udict_get_ref(key_len, tuple_len);
+    while (~ el_slice.null?()) {
+        int el = el_slice.begin_parse().preload_uint(4);
         ifnot (tuple_len) {
             list = single(el);
         } else {
             list = tuple_push(list, el);
         }
         tuple_len += 1;
+        el_slice = list_cell.udict_get_ref(key_len, tuple_len);
     }
     return list;
 }
@@ -228,12 +229,9 @@ cell get_store(cell current_round) impure {
     return levels_distribution;
 }
 
-tuple get_level_store(cell levels_distribution, int level) impure {
+cell get_level_store(cell levels_distribution, int level) impure {
     var units_distribution = udict_get_ref(levels_distribution, 4, level);
-    if (units_distribution.null?()) {
-        return nil;
-    }
-    return cell_to_tuple(units_distribution, 4);
+    return units_distribution;
 }
 
 cell create_position(cell positions, cell locations, int idx) impure {
@@ -284,7 +282,7 @@ int get_players_count(cell players) impure {
         var (coordinats, unit_idx, f2) = udict_get_min?(level_distribution, 16);
         while (f2) {
             ;; var (x, y) = (coordinats~load_int(16), coordinats~load_int(16));
-            int buyer_idx = tuple_get_index(level_store, unit_idx);
+            int buyer_idx = udict_get_ref(level_store, 8, unit_idx).begin_parse().preload_uint(4);
             throw_unless(60, buyer_idx == player_idx); ;; purchase not allowed
             gold -= 1;
             throw_if(61, gold < 0); ;; not enoght money
@@ -337,18 +335,19 @@ tuple distribute_units_per_level(int units_per_level_count, int players_count) i
 }
 
 cell tuple_to_cell(tuple list, int key_len, int list_len) impure {
-    builder list_cell = begin_cell();
-    int el = 0;
+    cell list_cell = new_dict();
     while(list_len) {
+        int el = 0;
         (list, el) = tuple_pop(list);
-        list_cell~store_uint(el, key_len);
         list_len -= 1;
+        list_cell~udict_set_ref(8, list_len, begin_cell().store_uint(el, key_len).end_cell());
     }
-    return list_cell.end_cell();
+    return list_cell;
 }
 
 cell store_distribution_per_level(cell current_round, tuple units_distribution_per_level, int units_per_level_count, int level) impure {
     cell units_distribution = tuple_to_cell(units_distribution_per_level, 4, units_per_level_count);
+    dump_stack();
     cell level_distribution = udict_get_ref(current_round, 4, 0);
     level_distribution~udict_set_ref(4, level, units_distribution);
     current_round~udict_set_ref(4, 0, level_distribution);
@@ -367,7 +366,6 @@ cell start_round(cell games, int idx) impure {
         var units_distribution_per_level = distribute_units_per_level(units_per_level_count, players_count);
         current_round = store_distribution_per_level(current_round, units_distribution_per_level, units_per_level_count, level);
         (level, units, f) = udict_get_next?(units_counter_by_level, 16, level);
-        dump_stack();
     }
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
     return games;
@@ -424,7 +422,6 @@ cell store_result(cell current_round, slice new_dict, int idx, int player_idx) i
 }
 
 cell update_board(cell boards, int new_result, int new_units_count, int new_stars, int key_len, int idx, int shouldAdd) impure {
-    ;;; ?????????????
     var (board_info, f) = udict_get?(boards, key_len, idx);
     int result = 0;
     int units_count = 0;
@@ -441,7 +438,6 @@ cell update_board(cell boards, int new_result, int new_units_count, int new_star
         units_count /= new_units_count;
         stars /= new_stars;
     }
-    ;;; ?????????????
     boards~udict_set(key_len, idx, begin_cell().store_uint(result, 8).store_uint(units_count, 32).store_uint(stars, 32).end_cell().begin_parse());
     return boards;
 }
@@ -880,10 +876,7 @@ cell getlocalstore(int game_idx) method_id {
 
 tuple getlocallevelstore(int game_idx, int level) method_id {
     cell store = getlocalstore(game_idx);
-    if (store.null?()) {
-        return nil;
-    }
-    return get_level_store(store, level);
+    return cell_to_tuple(get_level_store(store, level), 8);
 }
 
 (cell, cell) gettemproundresults(int game_idx) method_id {
