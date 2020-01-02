@@ -224,18 +224,6 @@ tuple cell_to_tuple(cell list_cell, int key_len ) impure {
     return list;
 }
 
-cell get_store(cell current_round) impure {
-    return udict_get_ref(current_round, 4, 0);
-}
-
-cell get_level_store(cell levels_distribution, int level) impure {
-    return udict_get_ref(levels_distribution, 4, level);
-}
-
-cell create_position(cell positions, cell locations, int idx) impure {
-    return positions.udict_set_ref(8, idx, locations);
-}
-
 cell update_players_counter(cell players, int players_counter, int key_len, int idx) impure {
     cell players_counter_cell = udict_get_ref(players, key_len, idx);
     int counter = 0;
@@ -264,13 +252,13 @@ int get_players_count(cell players) impure {
     throw_if(59, timeout < now());
     throw_if(62, locations.null?());
     cell positions = udict_get_ref(current_round, 4, 1);
-    var store = get_store(current_round);
+    var store = udict_get_ref(current_round, 4, 0);
     var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
     throw_unless(63, player_hash == slice_hash(owner_address));
     var (level_info, level, f1) = udict_get_min?(locations, 4);
     while (f1) {
         cell level_distribution = level_info.preload_dict();
-        var level_store = get_level_store(store, level);
+        var level_store = udict_get_ref(store, 4, level);
         var (coordinats, unit_idx, f2) = udict_get_min?(level_distribution, 16);
         while (f2) {
             ;; var (x, y) = (coordinats~load_int(16), coordinats~load_int(16));
@@ -283,7 +271,7 @@ int get_players_count(cell players) impure {
         
         (level, level_info, f1) = udict_get_next?(locations, 4, level);
     }
-    positions = create_position(positions, locations, player_idx);
+    positions~udict_set_ref(8, player_idx, locations);
     current_round~udict_set_ref(4, 1, positions);
     current_round = update_players_counter(current_round, 1, 4, 2);
     int players_in_game = udict_get_ref(current_round, 4, 2).begin_parse().preload_uint(16);
@@ -337,15 +325,6 @@ cell tuple_to_cell(tuple list, int key_len, int list_len) impure {
     return list_cell;
 }
 
-cell store_distribution_per_level(cell current_round, tuple units_distribution_per_level, int units_per_level_count, int level) impure {
-    cell units_distribution = tuple_to_cell(units_distribution_per_level, 4, units_per_level_count);
-    dump_stack();
-    cell level_distribution = udict_get_ref(current_round, 4, 0);
-    level_distribution~udict_set_ref(4, level, units_distribution);
-    current_round~udict_set_ref(4, 0, level_distribution);
-    return current_round;
-}
-
 cell start_round(cell games, int idx) impure {
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, idx);
     last_round_results = current_round;
@@ -355,8 +334,29 @@ cell start_round(cell games, int idx) impure {
     var (units, level, f) = udict_get_min?(units_counter_by_level, 16);
     while (f) {
         int units_per_level_count = units.preload_uint(16);
-        var units_distribution_per_level = distribute_units_per_level(units_per_level_count, players_count);
-        current_round = store_distribution_per_level(current_round, units_distribution_per_level, units_per_level_count, level);
+        var units_distribution_per_level = nil;
+        int tuple_len = 0;
+        int player_idx = 0; 
+        while (tuple_len < units_per_level_count) {
+            player_idx += 1;
+            ifnot (tuple_len) {
+                units_distribution_per_level = single(player_idx);
+            } else {
+                units_distribution_per_level = tuple_push(units_distribution_per_level, player_idx);
+            }
+            if (player_idx == players_count) {
+                player_idx = 0;
+            }
+            tuple_len += 1;
+        }
+        while (tuple_len) {
+            int r = rand(tuple_len);
+            tuple_len -= 1;
+            units_distribution_per_level = exchange(units_distribution_per_level, r, tuple_len);
+        }
+        cell level_distribution = udict_get_ref(current_round, 4, 0);
+        level_distribution~udict_set_ref(4, level, tuple_to_cell(units_distribution_per_level, 4, units_per_level_count));
+        current_round~udict_set_ref(4, 0, level_distribution);
         (level, units, f) = udict_get_next?(units_counter_by_level, 16, level);
     }
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
@@ -799,12 +799,12 @@ cell getlocalstore(int game_idx) method_id {
     (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
     cell games = udict_get_ref(matches, 2, 1);
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
-    return get_store(current_round);
+    return udict_get_ref(current_round, 4, 0);
 }
 
 tuple getlocallevelstore(int game_idx, int level) method_id {
     cell store = getlocalstore(game_idx);
-    return cell_to_tuple(get_level_store(store, level), 8);
+    return cell_to_tuple(udict_get_ref(store, 4, level), 8);
 }
 
 (cell, cell) gettemproundresults(int game_idx) method_id {
