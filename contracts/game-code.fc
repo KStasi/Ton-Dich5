@@ -35,11 +35,11 @@ forall X -> tuple single(X x) asm "SINGLE";
         .end_cell());
 }
 
-cell create_user(int owner_hash, cell users, int paid_until, int game_idx, int bans_counter, cell units) impure {
+cell create_user(int owner_hash, cell users, int paid_until, int game_idx, cell bans_counter, cell units) impure {
     slice user = begin_cell()
         .store_uint(paid_until, 32)
         .store_uint(game_idx, 8)
-        .store_uint(bans_counter, 32)
+        .store_dict(bans_counter)
         .store_dict(units)
         .end_cell()
         .begin_parse();
@@ -47,12 +47,12 @@ cell create_user(int owner_hash, cell users, int paid_until, int game_idx, int b
     return users;
 }
 
-(int, int, int, cell) get_user(int owner_hash, cell users) method_id {
+(int, int, cell, cell) get_user(int owner_hash, cell users) method_id {
     var ( s_user, f) = users.udict_get?(256, owner_hash);
     ifnot (f) {
-        return (0, 0, 0, new_dict());
+        return (0, 0, new_dict(), new_dict());
     }
-    return (s_user~load_uint(32), s_user~load_uint(8), s_user~load_uint(32), s_user.preload_dict());
+    return (s_user~load_uint(32), s_user~load_uint(8), s_user~load_dict(), s_user.preload_dict());
 
 }
 
@@ -483,6 +483,32 @@ cell start_round(cell games, int idx) impure {
     }
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
 }
+
+() complain(slice owner_address, int author_idx, int game_idx, int player_idx) impure {
+    var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
+    cell games = udict_get_ref(matches, 2, 1);
+    var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
+    var (author_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, author_idx);
+    throw_unless(67, author_hash == slice_hash(owner_address));
+    var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
+    var (paid_until, in_game, bans_counter, units) = get_user(player_hash, users);
+    cell game_bans = bans_counter.udict_get_ref(8, game_idx);
+    (slice ban, int f) = udict_get?(game_bans, 8, author_idx);
+    throw_if(68, f);
+    game_bans~udict_set(8, author_idx, begin_cell().store_uint(1, 1).end_cell().begin_parse());
+    bans_counter = update_units_counter(bans_counter, game_idx, 0, 1);
+    cell c_counter = udict_get_ref(bans_counter, 8, 0);
+    int counter = 0;
+    if (f) {
+        counter = c_counter.begin_parse().preload_uint(16);
+    }
+    counter += 1;
+    bans_counter~udict_set_ref(8, 0, begin_cell().store_uint(counter, 16).end_cell());
+    bans_counter~udict_set_ref(8, game_idx, game_bans);
+    users = create_user(player_hash, users, paid_until, in_game, bans_counter, units);
+
+    return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
+}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 () recv_external(slice in_msg) impure {
@@ -632,7 +658,7 @@ cell remove_expired(cell dict, int key_len) impure {
         ds.preload_uint(256));
 }
 
-(int, int, int, cell) getuser(int wc, int addr) method_id {
+(int, int, cell, cell) getuser(int wc, int addr) method_id {
     cell users = get_data().begin_parse().preload_dict();
     return get_user(slice_hash(begin_cell().store_uint(4, 3).store_int(wc, 8).store_uint(addr, 256).end_cell().begin_parse()), users);
 }
@@ -644,7 +670,7 @@ int getprice(int unit_id, int unit_level) method_id {
 }
 
 (int) getunits(int wc, int addr, int unit_id, int unit_level) method_id {
-    (int paid_until, int in_game, int bans_counter, cell units) = getuser(wc, addr);
+    (int paid_until, int in_game, cell bans_counter, cell units) = getuser(wc, addr);
     return get_unit_counter(units, unit_id, unit_level);
 }
 
@@ -675,7 +701,7 @@ int getplayeridx(int wc, int addr) method_id {
     (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
     cell games = udict_get_ref(matches, 2, 1);
     slice owner_address = begin_cell().store_uint(4, 3).store_int(wc, 8).store_uint(addr, 256).end_cell().begin_parse();
-    (int paid_until, int game_idx, int bans_counter, cell units) = get_user(slice_hash(owner_address), users);
+    (int paid_until, int game_idx, cell bans_counter, cell units) = get_user(slice_hash(owner_address), users);
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
     int owner_hash = slice_hash(owner_address);
     var idx = 0;
