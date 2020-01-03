@@ -6,7 +6,7 @@
 100842 constant getunits
 116502 constant getgame
 79730 constant getplayeridx
-107203 constant getlocalstore
+67958 constant getlocalstoreseed
 106679 constant getlocallevelstore
 76159 constant getlocations
 
@@ -39,10 +39,10 @@ drop
 -1 test
 
 // test # 1 get local store
-1 getlocalstore code updated_storage @ c7 runvmctx 
+1 getlocalstoreseed code updated_storage @ c7 runvmctx 
 test_code
-drop  
-<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
+drop
+0 test
 
 // test # 2 get local level store
 1 1 getlocallevelstore code updated_storage @ c7 runvmctx 
