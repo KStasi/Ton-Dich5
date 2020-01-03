@@ -470,6 +470,8 @@ int getplayerscount(int game_idx) method_id {
             (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
             unit_pool_by_level = update_units_list(unit_pool_by_level, unit_id, level, counter);
             level_counter += counter;
+            units = update_units_counter(units, unit_id, level, counter, false);
+
         }
         throw_unless(58, level_counter == 8); ;; exactly 8 units per level are allowed
         unit_pool_by_level = update_units_counter(unit_pool_by_level, level, 0, level_counter, true);
