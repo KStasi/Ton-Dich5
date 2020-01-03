@@ -476,38 +476,8 @@ cell start_round(cell games, int idx) impure {
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, idx);
     last_round_results = current_round;
     current_round = new_dict();
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    int players_count = get_players_count(players);
-    cell units_counter_by_level = udict_get_ref(unit_pool_by_level, 8, 0);
-    var (units, level, f) = udict_get_min?(units_counter_by_level, 16);
-    while (f) {
-        int units_per_level_count = units.preload_uint(16);
-        var units_distribution_per_level = nil;
-        int tuple_len = 0;
-        int player_idx = 0; 
-        while (tuple_len < units_per_level_count) {
-            player_idx += 1;
-            ifnot (tuple_len) {
-                units_distribution_per_level = single(player_idx);
-            } else {
-                units_distribution_per_level = tuple_push(units_distribution_per_level, player_idx);
-            }
-            if (player_idx == players_count) {
-                player_idx = 0;
-            }
-            tuple_len += 1;
-        }
-        while (tuple_len) {
-            int r = rand(tuple_len);
-            tuple_len -= 1;
-            units_distribution_per_level = exchange(units_distribution_per_level, r, tuple_len);
-        }
-        cell level_distribution = udict_get_ref(current_round, 4, 0);
-        level_distribution~udict_set_ref(4, level, tuple_to_cell(units_distribution_per_level, 4, units_per_level_count));
-        current_round~udict_set_ref(4, 0, level_distribution);
-        (level, units, f) = udict_get_next?(units_counter_by_level, 16, level);
-    }
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    current_round~udict_set_ref(4, 0, begin_cell().store_uint(get_seed(), 256).end_cell());
+
     games = create_game(games, idx, valid_unitl, should_start_round, unit_pool_by_level, players, current_round, last_round_results, timeout);
     return games;
 }
