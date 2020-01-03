@@ -799,7 +799,7 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
     if (seed_cell.null?()) {
         return nil;
     }
-    ;; set_seed(seed_cell.begin_parse().preload_uint(256));
+    set_seed(seed_cell.begin_parse().preload_uint(256));
     cell store = create_store(unit_pool_by_level, players);
     return cell_to_tuple(udict_get_ref(store, 4, level), 8);
 }
