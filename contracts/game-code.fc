@@ -395,7 +395,7 @@ cell store_results(cell current_round, cell boards_info, cell new_players_states
     var (users, matches, prices, ban_requests, stored_seqno, public_key) = load_data();
     cell games = udict_get_ref(matches, 2, 1);
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
-    throw_if(64, should_start_round); ;; round should be started
+    throw_if(64, should_start_round & (timeout < now())); ;; round should be started
     var (player_hash, gold, user_level, exp, hp, unit_pool) = get_player(players, player_idx);
     throw_unless(65, player_hash == slice_hash(owner_address));
     current_round = store_results(current_round, boards_info, new_players_states_info, player_idx);
@@ -850,6 +850,7 @@ int getunitscount(int game_idx, int level) method_id {
 ;; - add getter for player in round
 ;; - get rid off level in players state
 ;; - ban user for wrong positions
+;; - update fees calculations
 
 ;; minor TODO:
 ;; - add method to complain
