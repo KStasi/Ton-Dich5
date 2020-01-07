@@ -1,0 +1,198 @@
+#!/usr/bin/env fift -s
+"./03_line_up_to_match_tests.fif" include
+108902 constant getstorage
+128933 constant getuser
+71227 constant getprice
+100842 constant getunits
+116502 constant getgame
+79730 constant getplayeridx
+67958 constant getlocalstoreseed
+106679 constant getlocallevelstore
+76159 constant getlocations
+
+variable player_idx
+variable game_idx
+variable locations_per_level
+variable locations
+
+{ = test_ret_value } : test
+// test # 0 get local idx
+
+-1 <b 1 32 u, b> hashu getplayeridx code updated_storage @ c7 runvmctx 
+test_code
+drop
+1 test
+
+-1 <b 5 32 u, b> hashu getplayeridx code updated_storage @ c7 runvmctx 
+test_code
+drop 
+5 test
+
+-1 <b 8 32 u, b> hashu getplayeridx code updated_storage @ c7 runvmctx 
+test_code
+drop 
+8 test
+
+-1 <b 9 32 u, b> hashu getplayeridx code updated_storage @ c7 runvmctx 
+test_code
+drop 
+-1 test
+
+// test # 1 get local store
+1 getlocalstoreseed code updated_storage @ c7 runvmctx 
+test_code
+drop
+0 test
+
+// test # 2 get local level store
+1 1 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop
+count 64 test
+
+1 3 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop 
+count 64 test
+
+1 5 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop 
+count 64 test
+
+1 9 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop 
+tuple? 0= test_ret_value
+
+2 2 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop 
+tuple? 0= test_ret_value
+
+// test # 3 arrange units
+
+{ <b swap 16 u, swap 16 u, b> <s } : create-location-per-level
+{ locations_per_level @ 16 udict!+ not abort"cannot add location to dictionary" locations_per_level ! } : add-location-per-level
+{ <b locations_per_level @ dict, b> <s } : create-location
+{ locations @ 4 udict!+ not abort"cannot add location to dictionary" locations ! } : add-location
+
+dictnew locations !
+dictnew locations_per_level !
+10 10 create-location-per-level
+61 add-location-per-level
+create-location 1 add-location
+
+1 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+1 idx !
+send-request
+
+
+dictnew locations !
+dictnew locations_per_level !
+10 15 create-location-per-level
+57 add-location-per-level
+create-location 2 add-location
+
+2 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+2 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+10 15 create-location-per-level
+63 add-location-per-level
+create-location 2 add-location
+
+3 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+3 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+1 5 create-location-per-level
+56 add-location-per-level
+create-location 2 add-location
+
+4 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+4 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+11 5 create-location-per-level
+61 add-location-per-level
+create-location 4 add-location
+
+5 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+5 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 88 create-location-per-level
+60 add-location-per-level
+create-location 4 add-location
+
+6 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+6 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 6 create-location-per-level
+59 add-location-per-level
+create-location 4 add-location
+
+7 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+7 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 6 create-location-per-level
+0 add-location-per-level
+create-location 1 add-location
+
+8 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+8 idx !
+send-request
+
+// test # 4 get locations
+
+1 1 getlocations code updated_storage @ c7 runvmctx 
+test_code
+drop 
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value

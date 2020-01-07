@@ -11,13 +11,13 @@
 
 -1 <b 1 32 u, b> hashu getuser code updated_storage @ c7 runvmctx
 test_code
-2drop
-0 test -1 test 1570570873 test
+2drop 
+0 test 1 test 1570570873 test
 
 -1 <b 7 32 u, b> hashu getuser code updated_storage @ c7 runvmctx
 test_code
 2drop
-0 test -1 test 1570570873 test
+0 test 1 test 1570570873 test
 
 // test # 1 get non-existant user
 -1 <b 10 32 u, b> hashu getuser code updated_storage @ c7 runvmctx
@@ -51,11 +51,11 @@ drop
 2 test
 
 // test # 3 get game
-0 getgame code updated_storage @ c7 runvmctx
+1 getgame code updated_storage @ c7 runvmctx
 test_code
 drop
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
-<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
+<b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 
 
