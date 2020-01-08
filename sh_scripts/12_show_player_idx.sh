@@ -1,6 +1,9 @@
 #!/bin/sh
 CONTRACT=`fift -s fift_scripts/show-bouceable-addr.fif build/new-game `
-USER=`fift -s fift_scripts/show-addr.fif build/new-wallet-07 | cut -d ":" -f2`
-
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'last'
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$USER 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1 
+for i in 0 1 2 3 4 5 6 7
+do
+    user=`fift -s fift_scripts/show-addr.fif build/new-wallet-0$i | cut -d ":" -f2`
+    ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'last'
+    player_idx=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$user' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1'`
+    echo "Player idx for "$user" : "$player_idx
+done
