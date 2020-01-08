@@ -2,7 +2,9 @@
 "TonUtil.fif" include
 "Asm.fif" include
 
-1 constant seqno
+1 :$1..n
+$1 parse-int =: seqno
+
 variable prices 
 variable unit_price_lists 
 "build/update-prices-query"  constant savefile
