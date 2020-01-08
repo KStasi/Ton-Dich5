@@ -352,7 +352,7 @@ cell store_results(cell current_round, cell boards_info, cell new_players_states
     return current_round;
 }
 
-(cell, cell, cell, cell) end_round(cell unit_pool_by_level, cell players, cell current_round, cell users) impure {
+(cell, cell, cell, cell, cell) end_round(cell unit_pool_by_level, cell players, cell current_round, cell users) impure {
 
     int counter = get_players_count(players) - udict_get_ref(current_round, 4, 2).begin_parse().preload_uint(16);
     cell board = udict_get_ref(current_round, 4, 3);
@@ -375,7 +375,10 @@ cell store_results(cell current_round, cell boards_info, cell new_players_states
         (player_idx, new_players_state_info, f1) = udict_get_next?(new_players_state, 4, player_idx);
     }
     current_round~udict_set_ref(4, 3, board);
-    return (unit_pool_by_level, new_players, current_round, users);
+    cell last_round_results = current_round;
+    current_round = new_dict();
+    current_round~udict_set_ref(4, 0, begin_cell().store_uint(get_seed(), 256).end_cell());
+    return (unit_pool_by_level, new_players, current_round, last_round_results, users);
 
 }
 
@@ -385,7 +388,7 @@ cell store_results(cell current_round, cell boards_info, cell new_players_states
     var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
     throw_if(64, should_start_round);
     throw_if(66, timeout < now());
-    (unit_pool_by_level, players, current_round, users) = end_round(unit_pool_by_level, players, current_round, users);
+    (unit_pool_by_level, players, current_round, last_round_results, users) = end_round(unit_pool_by_level, players, current_round, users);
     games = create_game(games, game_idx, valid_unitl, true, unit_pool_by_level, players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
     return store_data(users, matches, prices, ban_requests, stored_seqno, public_key);
@@ -406,7 +409,7 @@ cell store_results(cell current_round, cell boards_info, cell new_players_states
     }
     current_round = update_players_counter(current_round, -1, 4, 2);
     if (players_in_game == 1) {
-        (unit_pool_by_level, players, current_round, users) = end_round(unit_pool_by_level, players, current_round, users);
+        (unit_pool_by_level, players, current_round, last_round_results, users) = end_round(unit_pool_by_level, players, current_round, users);
     }
     games = create_game(games, game_idx, valid_unitl, players_in_game == 1, unit_pool_by_level, players, current_round, last_round_results, timeout);
     matches~udict_set_ref(2, 1, games);
@@ -826,6 +829,14 @@ tuple getlocallevelstore(int game_idx, int level) method_id {
     return (udict_get_ref(current_round, 4, 3), udict_get_ref(current_round, 4, 4));
 }
 
+(cell, cell) getfinalroundresults(int game_idx) method_id {
+    var ds = get_data().begin_parse();
+    (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
+    cell games = udict_get_ref(matches, 2, 1);
+    var (valid_unitl, should_start_round, timeout, unit_pool_by_level, players, current_round, last_round_results) = get_game(games, game_idx);
+    return (udict_get_ref(last_round_results, 4, 3), udict_get_ref(last_round_results, 4, 4));
+}
+
 int getplayerscount(int game_idx) method_id {
     var ds = get_data().begin_parse();
     (cell users, cell matches) = (ds~load_dict(), ds.preload_dict());
@@ -851,6 +862,7 @@ int getunitscount(int game_idx, int level) method_id {
 ;; - get rid off level in players state
 ;; - ban user for wrong positions
 ;; - update fees calculations
+;; - send results when timeout
 
 ;; minor TODO:
 ;; - add method to complain
