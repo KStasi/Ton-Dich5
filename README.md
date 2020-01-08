@@ -29,7 +29,7 @@ Owner has the right to ban users.
 
 ## Project Stages
 
-NOTE: only part of the solution is implemented now.
+NOTE: partially connected to fronted 
 
 ## How to use
 
