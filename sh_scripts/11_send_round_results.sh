@@ -15,6 +15,6 @@ do
     fift -s fift_scripts/send-round-results.fif $GAME_IDX $player_idx
     
     fift -s fift_scripts/wallet.fif $wallet_name $CONTRACT $seqno 3 "./build/wallet-query" -B "./build/send-round-results.boc"
-    # ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'sendfile ./build/wallet-query.boc'
-    sleep 3
+    ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'sendfile ./build/wallet-query.boc'
+    sleep 4
 done

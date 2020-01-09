@@ -10,5 +10,5 @@ do
     seqno=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$user' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
     fift -s fift_scripts/wallet.fif "build/new-wallet-0"$i $CONTRACT $seqno 4.5 "./build/wallet-query" -B "./build/line-up.boc"
     ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'sendfile ./build/wallet-query.boc'
-    sleep 3
+    sleep 4
 done
