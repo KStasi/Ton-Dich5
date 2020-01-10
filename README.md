@@ -70,6 +70,7 @@ There are two script types:
 
  Second type is used for testing and mostly executes actions for few players per usage.
 
+## Fift scripts
 `wallet.fif` WALLET_NAME CONTRACT SEQNO AMOUNT QUERY_FILE_NAME
 Main script for all wallet manipulations. It is used to wrap most of boc file and to send it as internal message to `Game` contract along with some Grams.
 
@@ -119,3 +120,61 @@ UNITS_SOURCE example.
 The script for external message to contract to update units prices. UNITS_SOURCE is set to `units-source.fif` by default.
 
 By default all `.boc` outputs are stored in `build/`
+
+## Shell scripts
+
+`00_prepare.sh`
+Creates all wallets for testing using `./build/main-wallet`.
+
+`01_create_wallet.sh`
+Compile single wallet code and creates wallet boc file.
+
+`02_broadcast_wallet.sh`
+Broadcasts wallet code to network.
+
+`03_create_contract.sh`
+Compile game contract code and creates contract boc file.
+
+`04_broadcast_contract.sh`
+Broadcasts game code to network.
+
+`05_update_prices.sh`
+Updates units prices in store.
+
+`06_buy_unit.sh`
+Send request to buy units for 8 users.
+
+`07_line_up.sh`
+Line up 8 players to start one game. 
+
+`08_show_wallets_addr.sh`
+Display player wallets addresses.
+
+`09_show_local_store.sh`
+Show local store of the current round of the game_idx specified in the file. 
+
+`10_arrange_units.sh`
+Sends units locations of 8 users.
+
+`11_send_round_results.sh`
+Sends results of 8 players.
+
+`12_show_player_idx.sh`
+Show player_idx of 8 users.
+
+`13_get_seqno.sh`
+Return seqno of specific wallet.
+
+`14_check_units_counter.sh`
+Returns units of 8 users. 
+
+`15_get_queue_length.sh`
+Display queue length (useful for check if game has started).
+
+`16_get_final_round_results.sh`
+Returns final round results as cell.
+
+`test.sh`
+Script to run all tests.
+
+Note: all scripts are expected to be run from root project directory.
