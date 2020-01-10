@@ -1,5 +1,4 @@
 #!/bin/sh
-fift -s fift_scripts/line-up-queue.fif
 CONTRACT=`fift -s fift_scripts/show-bouceable-addr.fif build/new-game `
 
 for i in 0 1 2 3 4 5 6 7

@@ -59,3 +59,63 @@ Run:
 ```
 ./sh_scripts/test.sh 
 ```
+
+# Scripts explained
+
+There are two script types:
+ - fift
+ - shell.
+
+ First type intends to prepare one single boc file for one action or get some blockchain information for one instance (game or player). 
+
+ Second type is used for testing and mostly executes actions for few players per usage.
+
+`wallet.fif` WALLET_NAME CONTRACT SEQNO AMOUNT QUERY_FILE_NAME
+Main script for all wallet manipulations. It is used to wrap most of boc file and to send it as internal message to `Game` contract along with some Grams.
+
+`arrange-units.fif` LOCATION_SOURCE
+The script to prepare internal message with units positions in the round. Units locations are specified in LOCATION_SOURCE Note: it should be send from wallet.
+
+`buy-unit.fif` TYPE LEVEL COUNTER
+The script to prepare internal message with units that should be bought in the store. Unit TYPE, LEVEL and COUNTER should 
+be provided. Note: it should be send from wallet.
+
+`get-local-store.fif` GAME_IDX
+The script to get current round local store. Returns 5 arrays with PLAYER_IDX describes units (index in array is UNIT_IDX in game) they are allowed to buy in the round. Note: NOT send it to network; script uses CONTRACT_STATE from file.
+
+`line-up-queue.fif` 
+The script to prepare internal message to line up user to players queue for next game. Note: it should be send from wallet.
+
+`locations/`
+Folder that contains LOCATION_SOURCEs. 
+
+`locations-source.fif`
+LOCATION_SOURCE example.
+
+`new-game.fif`
+The script to create new game contract.
+
+`new-wallet.fif`
+The script to create new wallet contract.
+
+`results-source.fif`
+RESULT_SOURCE example.
+
+`send-round-results.fif`
+
+`show-addr.fif` WALLET_NAME
+The script to display address of WALLET_NAME. Note: NOT send it to network.
+
+`show-bouceable-addr.fif`
+The script to display address of WALLET_NAME. Note: NOT send it to network.
+
+`show-init-addr.fif`
+The script to display address of WALLET_NAME. Note: NOT send it to network.
+
+`units-source.fif`
+UNITS_SOURCE example.
+
+`update-prices.fif` SEQNO
+The script for external message to contract to update units prices. UNITS_SOURCE is set to `units-source.fif` by default.
+
+By default all `.boc` outputs are stored in `build/`

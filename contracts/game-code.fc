@@ -863,6 +863,7 @@ int getunitscount(int game_idx, int level) method_id {
 ;; - ban user for wrong positions
 ;; - update fees calculations
 ;; - send results when timeout
+;; - what if no results provided? 
 
 ;; minor TODO:
 ;; - add method to complain
