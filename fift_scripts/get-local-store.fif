@@ -3,7 +3,9 @@
 "Asm.fif" include
 
 106679 constant getlocallevelstore
-1 constant game_idx
+3 :$1..n
+$1 "1" replace-if-null parse-int =: game_idx
+
 "build/new-game" constant file-base
 "build/contract.boc" file>B B>boc constant updated_storage
 "build/game-code.fif" include <s constant code

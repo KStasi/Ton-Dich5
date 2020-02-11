@@ -1,25 +1,29 @@
 #!/bin/sh
 CONTRACT=`fift -s fift_scripts/show-bouceable-addr.fif build/new-game `
-fift -s fift_scripts/buy-unit.fif 10001 1 8
-fift -s fift_scripts/wallet.fif "build/new-wallet-07" $CONTRACT 1 0.5 "./build/wallet-query" -B "./build/buy-unit.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'
-sleep 3
 
-fift -s fift_scripts/buy-unit.fif 20002 2 8
-fift -s fift_scripts/wallet.fif "build/new-wallet-07" $CONTRACT 2 0.5 "./build/wallet-query" -B "./build/buy-unit.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'
-sleep 3
+for i in 0 1 2 3 4 5 6 7
+do
+    wallet_name="build/new-wallet-0"$i
+    user=`fift -s fift_scripts/show-bouceable-addr.fif $wallet_name`
+    user_hex=`fift -s fift_scripts/show-addr.fif $wallet_name | cut -d ":" -f2`
+    units=("10001 1 8" "20002 2 8" "30003 3 8" "40004 4 8" "50005 5 8")
+    for unit in "${units[@]}"
+    do
+        unit_arr=($unit)
+        type=${unit_arr[0]}
+        level=${unit_arr[1]}
+        counter=${unit_arr[2]}
+        fift -s fift_scripts/buy-unit.fif $type $level $counter
+        ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'last'
+        seqno=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$user' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
+        fift -s fift_scripts/wallet.fif "build/new-wallet-0"$i $CONTRACT $seqno 1 "./build/wallet-query" -B "./build/buy-unit.boc" 2>&1
+        res=` ./lite-client/lite-client -C ./lite-client/ton-global.config -c "runmethod $CONTRACT getunits -1 0x$user_hex $type $level" 2>&1 | grep result | cut -d "[" -f2 | cut -d "]" -f1`
+        if [[ $res == " 0 " ]] 
+        then
+        ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'sendfile ./build/wallet-query.boc'
+        # echo $res
+        sleep 5
+        fi
+    done
+done
 
-fift -s fift_scripts/buy-unit.fif 30003 3 8
-fift -s fift_scripts/wallet.fif "build/new-wallet-07" $CONTRACT 3 0.5 "./build/wallet-query" -B "./build/buy-unit.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'
-sleep 3
-
-fift -s fift_scripts/buy-unit.fif 40004 4 8
-fift -s fift_scripts/wallet.fif "build/new-wallet-07" $CONTRACT 4 0.5 "./build/wallet-query" -B "./build/buy-unit.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'
-sleep 3
-
-fift -s fift_scripts/buy-unit.fif 50005 5 8
-fift -s fift_scripts/wallet.fif "build/new-wallet-07" $CONTRACT 5 0.5 "./build/wallet-query" -B "./build/buy-unit.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'

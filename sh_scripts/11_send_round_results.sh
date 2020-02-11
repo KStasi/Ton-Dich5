@@ -1,14 +1,20 @@
 #!/bin/sh
-WALLET_NAME="build/new-wallet"
-GAME_IDX=1
 CONTRACT=`fift -s fift_scripts/show-bouceable-addr.fif build/new-game `
-USER=`fift -s fift_scripts/show-bouceable-addr.fif $WALLET_NAME`
-USER_HEX=`fift -s fift_scripts/show-addr.fif $WALLET_NAME | cut -d ":" -f2`
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'last'
-SEQNO=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$USER' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
-PLAYER_IDX=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$USER_HEX 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1 `
+GAME_IDX=1
 
+for i in 0 1 2 3 4 5 6 7
+do
+    wallet_name="build/new-wallet-0"$i
+    user=`fift -s fift_scripts/show-bouceable-addr.fif $wallet_name`
+    user_hex=`fift -s fift_scripts/show-addr.fif $wallet_name | cut -d ":" -f2`
 
-fift -s fift_scripts/send-round-results.fif $GAME_IDX $PLAYER_IDX
-fift -s fift_scripts/wallet.fif $WALLET_NAME $CONTRACT $SEQNO 3 "./build/wallet-query" -B "./build/send-round-results.boc"
-./lite-client/lite-client -C ./lite-client/ton-global.config -c 'sendfile ./build/wallet-query.boc'
+    ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'last'
+    seqno=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$user' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
+    player_idx=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$user_hex 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1 `
+    
+    fift -s fift_scripts/send-round-results.fif $GAME_IDX $player_idx
+    
+    fift -s fift_scripts/wallet.fif $wallet_name $CONTRACT $seqno 3 "./build/wallet-query" -B "./build/send-round-results.boc"
+    ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'sendfile ./build/wallet-query.boc'
+    sleep 4
+done

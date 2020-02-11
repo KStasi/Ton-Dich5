@@ -3,6 +3,8 @@
 114624 constant gettemproundresults
 113176 constant getplayerscount
 80145 constant getunitscount
+73106 constant getfinalroundresults
+100842 constant getunits
 
 variable boards
 variable new_players_state
@@ -125,9 +127,9 @@ send-request
 send-request
 // test # 3 check round results
 
-1 gettemproundresults code updated_storage @ c7 runvmctx 
+1 getfinalroundresults code updated_storage @ c7 runvmctx 
 test_code 
-drop
+drop .s
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= 0= test_ret_value
 
@@ -153,3 +155,111 @@ drop
 1 = test_ret_value
 
 // test # 7 try start new round
+dictnew locations !
+dictnew locations_per_level !
+10 10 create-location-per-level
+61 add-location-per-level
+create-location 1 add-location
+
+1 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+1 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+10 15 create-location-per-level
+57 add-location-per-level
+create-location 2 add-location
+
+2 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+2 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+10 15 create-location-per-level
+63 add-location-per-level
+create-location 2 add-location
+
+3 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+3 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+1 5 create-location-per-level
+56 add-location-per-level
+create-location 2 add-location
+
+dictnew locations !
+dictnew locations_per_level !
+11 5 create-location-per-level
+61 add-location-per-level
+create-location 4 add-location
+
+5 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+5 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 88 create-location-per-level
+60 add-location-per-level
+create-location 4 add-location
+
+6 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+6 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 6 create-location-per-level
+59 add-location-per-level
+create-location 4 add-location
+
+7 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+7 idx !
+send-request
+
+dictnew locations !
+dictnew locations_per_level !
+7 6 create-location-per-level
+0 add-location-per-level
+create-location 1 add-location
+
+8 player_idx !
+1 game_idx !
+<b 0xcceeee 32 u, 0 64 u, player_idx @ 8 u, game_idx @ 8 u, locations @ dict,  b> 
+<s int_msg_body !  
+
+8 idx !
+send-request
+
+1 2 getlocallevelstore code updated_storage @ c7 runvmctx 
+test_code
+drop .s
+count 63 test

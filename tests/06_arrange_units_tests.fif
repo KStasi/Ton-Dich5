@@ -1,10 +1,5 @@
 #!/usr/bin/env fift -s
 "./03_line_up_to_match_tests.fif" include
-108902 constant getstorage
-128933 constant getuser
-71227 constant getprice
-100842 constant getunits
-116502 constant getgame
 79730 constant getplayeridx
 67958 constant getlocalstoreseed
 106679 constant getlocallevelstore
