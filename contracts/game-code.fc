@@ -602,9 +602,20 @@ cell remove_expired(cell dict, int key_len) impure {
             if (f) {
                 (paid_until, in_game, bans_counter, units) = (s_user~load_uint(32), s_user~load_uint(8), s_user~load_uint(32), s_user.preload_dict());
             }
+
+            var (unit_pool, level, level_units, f) = udict_delete_get_min(unit_pool, 4);
+            while (f) {
+                int level_counter = 0;
+                while (level_units.slice_bits()) {
+                    (int counter, int unit_id) = (level_units~load_uint(8), level_units~load_uint(16));
+                    units = update_units_counter(units, unit_id, level, counter);
+                }
+                (unit_pool, level, level_units, f) = udict_delete_get_min(unit_pool, 4);
+            }
+
             slice user = begin_cell()
                 .store_uint(paid_until, 32)
-                .store_int(in_game, 1)
+                .store_int(false, 1)
                 .store_uint(bans_counter, 32)
                 .store_dict(units)
                 .end_cell()
