@@ -15,7 +15,7 @@ test_code
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
 1 test 1570570873 test
 
--1 <b 7 32 u, b> hashu getuser code updated_storage @ c7 runvmctx
+-1 <b 2 32 u, b> hashu getuser code updated_storage @ c7 runvmctx
 test_code
 2drop
 <b swap dict, b> boc>B <b dictnew dict, b> boc>B B= test_ret_value
@@ -46,10 +46,10 @@ drop
 <b 0xaaeeee 32 u, 0 64 u, unit_id @ 16 u, unit_level @ 8 u, units_counter @ 16 u,  b> 
 <s int_msg_body !  
 
-3 idx !
+2 idx !
 send-request
 
--1 <b 3 32 u, b> hashu 2 2 getunits code updated_storage @ c7 runvmctx
+-1 <b 2 32 u, b> hashu 2 2 getunits code updated_storage @ c7 runvmctx
 test_code
 drop
 2 test

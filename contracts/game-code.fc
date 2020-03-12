@@ -475,7 +475,7 @@ cell start_round(cell games, int idx) impure {
         game_idx = 1;
     }
     users = create_user(owner_hash, users, paid_until, game_idx, bans_counter, units);
-    if (queue_length == 8) {
+    if (queue_length == 2) {
         queue = update_players_counter(queue, 8, 8, 0);
         cell current_round = new_dict();
         current_round~udict_set_ref(4, 0, begin_cell().store_uint(get_seed(), 256).end_cell());
@@ -875,6 +875,8 @@ int getunitscount(int game_idx, int level) method_id {
 ;; - update fees calculations
 ;; - send results when timeout
 ;; - what if no results provided? 
+;; - fix last player end
+;; - fix distribution
 
 ;; minor TODO:
 ;; - add method to complain
