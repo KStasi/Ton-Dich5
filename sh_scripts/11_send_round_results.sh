@@ -9,8 +9,8 @@ do
     user_hex=`fift -s fift_scripts/show-addr.fif $wallet_name | cut -d ":" -f2`
 
     ./lite-client/lite-client -C ./lite-client/ton-global.config -l null -c 'last'
-    seqno=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$user' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
-    player_idx=`./lite-client/lite-client -C ./lite-client/ton-global.config -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$user_hex 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1 `
+    seqno=`./lite-client/lite-client -v 0 -C ./lite-client/ton-global.config -l /dev/null -c 'runmethod '$user' seqno' 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1`
+    player_idx=`./lite-client/lite-client -v 0 -C ./lite-client/ton-global.config -l /dev/null -c 'runmethod '$CONTRACT' getplayeridx -1 0x'$user_hex 2>&1 |  grep result | cut -d "[" -f2 | cut -d "]" -f1 `
     
     fift -s fift_scripts/send-round-results.fif $GAME_IDX $player_idx
     
