@@ -2,7 +2,7 @@
 "TonUtil.fif" include
 "Asm.fif" include
 
-106679 constant getlocallevelstore
+96902 constant getunitslevelstore
 
 true constant bounce
 3 :$1..n
@@ -21,14 +21,14 @@ dest_addr nip , dictnew ,
 1 tuple 
 constant c7
 
-game_idx 1 getlocallevelstore code updated_storage c7 runvmctx 
+game_idx 1 getunitslevelstore code updated_storage c7 runvmctx 
 2drop
-game_idx 2 getlocallevelstore code updated_storage c7 runvmctx 
+game_idx 2 getunitslevelstore code updated_storage c7 runvmctx 
 2drop
-game_idx 3 getlocallevelstore code updated_storage c7 runvmctx 
+game_idx 3 getunitslevelstore code updated_storage c7 runvmctx 
 2drop
-game_idx 4 getlocallevelstore code updated_storage c7 runvmctx 
+game_idx 4 getunitslevelstore code updated_storage c7 runvmctx 
 2drop 
-game_idx 5 getlocallevelstore code updated_storage c7 runvmctx 
+game_idx 5 getunitslevelstore code updated_storage c7 runvmctx 
 2drop 
 .s

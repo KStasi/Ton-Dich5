@@ -1,7 +1,7 @@
 #!/bin/sh
 CONTRACT=`fift -s fift_scripts/show-bouceable-addr.fif build/new-game `
 ./lite-client/lite-client -v 0 -C ./lite-client/ton-global.config -l /dev/null -c 'last'
-SEQNO=`./lite-client/lite-client -v 0 -C ./lite-client/ton-global.config -c  'runmethod '$CONTRACT' seqno' |  grep 'remote result' | cut -d "[" -f2 | cut -d "]" -f1`
+SEQNO=`./lite-client/lite-client -v 0 -C ./lite-client/ton-global.config -c  'runmethod '$CONTRACT' getstorage' |  grep 'remote result' | cut -d "[" -f2 | cut -d "]" -f1 | cut -d " " -f6`
 
 
 fift -s fift_scripts/update-prices.fif $SEQNO
