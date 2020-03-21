@@ -1,0 +1,27 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+73106 constant getfinalroundresults
+
+true constant bounce
+3 :$1..n
+$1 bounce parse-load-address =: bounce 2=: dest_addr
+$2 "1" replace-if-null parse-int =: game_idx
+
+"build/contract.boc" file>B B>boc constant updated_storage
+"build/game-code.fif" include <s constant code
+
+0 tuple 0x076ef1ea ,
+0 , 0 , 
+1570470873 ,
+1 , 1 , 0 , 
+0 tuple 9223372036854775807 , dictnew , , 
+dest_addr nip , dictnew , 
+1 tuple 
+constant c7
+
+game_idx .s getfinalroundresults code updated_storage c7 runvmctx 
+ // 2drop
+
+.s

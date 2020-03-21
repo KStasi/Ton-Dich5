@@ -479,7 +479,7 @@ cell start_round(cell games, int idx) impure {
         queue = update_players_counter(queue, 2, 8, 0);
         cell current_round = new_dict();
         current_round~udict_set_ref(4, 0, begin_cell().store_uint(get_seed(), 256).end_cell());
-        games = create_game(games, game_idx, now() + 40000, true, unit_pool_by_level, queue, current_round, new_dict(), now() + 7200);
+        games = create_game(games, game_idx, now() + 400000, true, unit_pool_by_level, queue, current_round, new_dict(), now() + 7200);
         matches~udict_set_ref(2, 1, games);
         (matches, int idx, cell queue, int f1) = udict_delete_get_min_ref(matches, 2);
         (matches, int idx, cell unit_pool_by_level, int f1) = udict_delete_get_max_ref(matches, 2);
