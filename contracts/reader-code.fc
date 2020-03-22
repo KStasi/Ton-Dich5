@@ -1,0 +1,13 @@
+(slice, int, int) udict_get_min?(cell dict, int key_len) asm "DICTUMIN" "NULLSWAPIFNOT" "NULLSWAPIFNOT";
+
+(cell, int, slice, int) getmin(cell dict, int len) method_id {
+  return udict_delete_get_min(dict, 4);
+}
+
+(cell) getdict(slice dict) method_id {
+  return dict.preload_dict();
+}
+
+() recv_internal(slice in_msg) impure {
+  ;; needed to run vm
+}

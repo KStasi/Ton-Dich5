@@ -3,14 +3,22 @@
 "Asm.fif" include
 
 76159 constant getlocations
+114870 constant getmin
+119924 constant getdict
 
+variable locations
+variable location
+variable locations_per_level
+variable found
 true constant bounce
 3 :$1..n
 $1 bounce parse-load-address =: bounce 2=: dest_addr
 $2 "1" replace-if-null parse-int =: game_idx
+$3 "1" replace-if-null parse-int =: player_idx
 
 "build/contract.boc" file>B B>boc constant updated_storage
 "build/game-code.fif" include <s constant code
+"build/reader-code.fif" include <s constant reader-code
 
 0 tuple 0x076ef1ea ,
 0 , 0 , 
@@ -21,8 +29,60 @@ dest_addr nip , dictnew ,
 1 tuple 
 constant c7
 
-game_idx 1 getlocations code updated_storage c7 runvmctx 
+// game_idx 0 getlocations code updated_storage c7 runvmctx 
+// 2drop
+
+
+game_idx player_idx getlocations code updated_storage c7 runvmctx 
 2drop
-game_idx 2 getlocations code updated_storage c7 runvmctx 
+<s ref@
+locations !
+
+locations @ 4 getmin reader-code <b b> c7 runvmctx
 2drop
-.s
+found !
+rot
+locations !
+swap 
+."level: " (.) type cr 
+getdict reader-code <b b> c7 runvmctx
+2drop
+locations_per_level !
+
+{ found @ } { 
+
+locations_per_level @ 16 getmin reader-code <b b> c7 runvmctx
+2drop
+found !
+rot
+locations_per_level !
+swap 
+
+found @ { ."unit: " (.) type cr location ! 
+}  { drop } cond 
+
+{ found @ } { 
+locations_per_level @ 16 getmin reader-code <b b> c7 runvmctx
+2drop
+found !
+rot
+locations_per_level !
+swap 
+."unit: " (.) type cr 
+locations_per_level !
+drop
+found @ { "," type cr }  if
+}  while
+locations @ 4 getmin reader-code <b b> c7 runvmctx
+2drop
+found !
+rot
+locations !
+swap 
+
+found @ { ."level: " (.) type cr } if
+
+locations_per_level !
+
+}  while
+
